@@ -1,0 +1,97 @@
+{
+  "app": {
+    "name": "ONEIRO",
+    "tagline": "See What Your Dreams Are Telling You"
+  },
+  "dream": {
+    "title": "What did you dream about?",
+    "placeholder": "I was flying over a vast ocean, then suddenly fell into deep water...",
+    "moods": {
+      "scary": "Scary",
+      "peaceful": "Peaceful",
+      "confusing": "Confusing",
+      "vivid": "Vivid",
+      "recurring": "Recurring",
+      "lucid": "Lucid"
+    },
+    "recurring": "Was this a recurring dream?",
+    "interpret": "Interpret My Dream",
+    "minLength": "Minimum 20 characters",
+    "maxLength": "Maximum 2000 characters",
+    "charCount": "{{count}} characters"
+  },
+  "loading": {
+    "step1": "Entering your dreamscape...",
+    "step2": "Decoding the symbols...",
+    "step3": "Your soul speaks...",
+    "error": "Something went wrong. Please try again.",
+    "retry": "Retry"
+  },
+  "result": {
+    "essence": "The Essence",
+    "hiddenMeaning": "The Hidden Meaning",
+    "symbols": "Key Symbols",
+    "insight": "Deep Insight",
+    "unlock": "Unlock Full Reading",
+    "stars": "⭐ {{count}} Stars",
+    "advice": "Actionable Advice",
+    "spiritual": "Spiritual Message",
+    "share": "Share",
+    "save": "Save to Dream Journal",
+    "upsell": {
+      "visualize": {
+        "title": "🎨 See Your Dream",
+        "description": "Transform your dream into beautiful AI art",
+        "price": "⭐ 150 Stars"
+      },
+      "report": {
+        "title": "📜 Soul Message Report",
+        "description": "Includes 7-day guidance",
+        "price": "⭐ 300 Stars"
+      }
+    },
+    "crossPromo": "✨ Want to know your Destiny? Try @KismetBot"
+  },
+  "referral": {
+    "title": "Get Free Credits",
+    "description": "Invite 3 friends to unlock a free Full Reading!",
+    "copy": "Copy Link",
+    "share": "Share",
+    "progress": "Invited Friends",
+    "unlocked": "Free credit unlocked! Use it now."
+  },
+  "visualize": {
+    "loading": "Painting your dreamscape...",
+    "title": "Art Title",
+    "save": "Save",
+    "share": "Share",
+    "another": "Interpret Another Dream",
+    "error": "Failed to generate image. Please try again.",
+    "retry": "Retry"
+  },
+  "home": {
+    "dailySymbol": "Today's Dream Symbol",
+    "quickActions": {
+      "newDream": "New Dream",
+      "journal": "Dream Journal"
+    },
+    "recent": "Recent Dreams",
+    "gallery": "Dream Gallery",
+    "noGallery": "No dream art yet. Visualize your first dream! 🎨",
+    "crossPromo": "✨ Want to know your Destiny? Try @KismetBot"
+  },
+  "journal": {
+    "title": "Dream Journal",
+    "empty": "No dreams recorded yet.",
+    "date": "Date",
+    "view": "View Details"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next",
+    "optional": "Optional"
+  }
+}

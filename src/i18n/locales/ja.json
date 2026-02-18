@@ -1,0 +1,96 @@
+{
+  "app": {
+    "name": "ONEIRO",
+    "tagline": "夢が伝えるメッセージを発見する"
+  },
+  "dream": {
+    "title": "どんな夢を見ましたか？",
+    "placeholder": "広い海の上を飛んでいて、突然深い水の中に落ちました...",
+    "moods": {
+      "scary": "怖い",
+      "peaceful": "平和な",
+      "confusing": "混乱した",
+      "vivid": "鮮明な",
+      "recurring": "繰り返し",
+      "lucid": "明晰夢"
+    },
+    "recurring": "繰り返し見る夢ですか？",
+    "interpret": "夢を解釈する",
+    "minLength": "最低20文字",
+    "maxLength": "最大2000文字",
+    "charCount": "{{count}}文字"
+  },
+  "loading": {
+    "step1": "あなたの夢の世界に入る中...",
+    "step2": "シンボルを解読する中...",
+    "step3": "魂が語っています...",
+    "error": "エラーが発生しました。もう一度お試しください。",
+    "retry": "再試行"
+  },
+  "result": {
+    "essence": "本質",
+    "hiddenMeaning": "隠された意味",
+    "symbols": "主要なシンボル",
+    "insight": "深い洞察",
+    "unlock": "完全な解釈のロック解除",
+    "stars": "⭐ {{count}}スター",
+    "advice": "実践可能なアドバイス",
+    "spiritual": "スピリチュアルメッセージ",
+    "share": "共有",
+    "save": "夢日記に保存",
+    "upsell": {
+      "visualize": {
+        "title": "🎨 夢を可視化",
+        "description": "夢を美しいAIアートに変換",
+        "price": "⭐ 150スター"
+      },
+      "report": {
+        "title": "📜 魂のメッセージレポート",
+        "description": "7日間のガイダンスを含む",
+        "price": "⭐ 300スター"
+      }
+    },
+    "crossPromo": "✨ 運命を知りたいですか？@KismetBotをお試しください"
+  },
+  "referral": {
+    "title": "無料クレジットを取得",
+    "description": "友達3人を招待すると、完全な解釈を無料で受け取れます！",
+    "copy": "リンクをコピー",
+    "share": "共有",
+    "progress": "招待した友達",
+    "unlocked": "無料クレジットが解除されました！今すぐ使用してください。"
+  },
+  "visualize": {
+    "loading": "夢を描く中...",
+    "title": "作品タイトル",
+    "save": "保存",
+    "share": "共有",
+    "another": "別の夢を解釈する",
+    "error": "画像の生成に失敗しました。もう一度お試しください。",
+    "retry": "再試行"
+  },
+  "home": {
+    "dailySymbol": "今日の夢のシンボル",
+    "quickActions": {
+      "newDream": "新しい夢",
+      "journal": "夢日記"
+    },
+    "recent": "最近の夢",
+    "gallery": "夢ギャラリー",
+    "noGallery": "まだ夢のアートがありません。最初の夢を可視化してみてください！🎨",
+    "crossPromo": "✨ 運命を知りたいですか？@KismetBotをお試しください"
+  },
+  "journal": {
+    "title": "夢日記",
+    "empty": "まだ記録された夢がありません。",
+    "date": "日付",
+    "view": "詳細を見る"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "retry": "再試行",
+    "back": "戻る",
+    "next": "次へ"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "app": {
+    "name": "ONEIRO",
+    "tagline": "Descubre lo que tus sueños te están diciendo"
+  },
+  "dream": {
+    "title": "¿Qué soñaste?",
+    "placeholder": "Estaba volando sobre un vasto océano, luego de repente caí en aguas profundas...",
+    "moods": {
+      "scary": "Terrorífico",
+      "peaceful": "Pacífico",
+      "confusing": "Confuso",
+      "vivid": "Vívido",
+      "recurring": "Recurrente",
+      "lucid": "Lúcido"
+    },
+    "recurring": "¿Fue un sueño recurrente?",
+    "interpret": "Interpretar Mi Sueño",
+    "minLength": "Mínimo 20 caracteres",
+    "maxLength": "Máximo 2000 caracteres",
+    "charCount": "{{count}} caracteres"
+  },
+  "loading": {
+    "step1": "Entrando en tu mundo de sueños...",
+    "step2": "Decodificando los símbolos...",
+    "step3": "Tu alma habla...",
+    "error": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "retry": "Reintentar"
+  },
+  "result": {
+    "essence": "La Esencia",
+    "hiddenMeaning": "El Significado Oculto",
+    "symbols": "Símbolos Clave",
+    "insight": "Perspicacia Profunda",
+    "unlock": "Desbloquear Lectura Completa",
+    "stars": "⭐ {{count}} Estrellas",
+    "advice": "Consejos Accionables",
+    "spiritual": "Mensaje Espiritual",
+    "share": "Compartir",
+    "save": "Guardar en Diario de Sueños",
+    "upsell": {
+      "visualize": {
+        "title": "🎨 Ver Tu Sueño",
+        "description": "Transforma tu sueño en arte AI hermoso",
+        "price": "⭐ 150 Estrellas"
+      },
+      "report": {
+        "title": "📜 Informe de Mensaje del Alma",
+        "description": "Incluye guía de 7 días",
+        "price": "⭐ 300 Estrellas"
+      }
+    },
+    "crossPromo": "✨ ¿Quieres conocer tu Destino? Prueba @KismetBot"
+  },
+  "referral": {
+    "title": "Obtener Créditos Gratis",
+    "description": "¡Invita a 3 amigos para desbloquear una Lectura Completa gratis!",
+    "copy": "Copiar Enlace",
+    "share": "Compartir",
+    "progress": "Amigos Invitados",
+    "unlocked": "¡Crédito gratis desbloqueado! Úsalo ahora."
+  },
+  "visualize": {
+    "loading": "Pintando tu mundo de sueños...",
+    "title": "Título de la Obra",
+    "save": "Guardar",
+    "share": "Compartir",
+    "another": "Interpretar Otro Sueño",
+    "error": "Error al generar la imagen. Por favor, inténtalo de nuevo.",
+    "retry": "Reintentar"
+  },
+  "home": {
+    "dailySymbol": "Símbolo del Sueño de Hoy",
+    "quickActions": {
+      "newDream": "Nuevo Sueño",
+      "journal": "Diario de Sueños"
+    },
+    "recent": "Sueños Recientes",
+    "gallery": "Galería de Sueños",
+    "noGallery": "Aún no hay arte de sueños. ¡Visualiza tu primer sueño! 🎨",
+    "crossPromo": "✨ ¿Quieres conocer tu Destino? Prueba @KismetBot"
+  },
+  "journal": {
+    "title": "Diario de Sueños",
+    "empty": "Aún no hay sueños registrados.",
+    "date": "Fecha",
+    "view": "Ver Detalles"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "back": "Atrás",
+    "next": "Siguiente"
+  }
+}
