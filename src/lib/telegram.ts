@@ -1,5 +1,3 @@
-import { init } from '@telegram-apps/sdk'
-
 export const initTelegram = async () => {
   try {
     const tg = window.Telegram?.WebApp

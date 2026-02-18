@@ -15,7 +15,7 @@ interface DailySymbol {
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { dreamJournal, userProfile } = useDreamStore()
+  const { dreamJournal } = useDreamStore()
   const [dailySymbol, setDailySymbol] = useState<DailySymbol | null>(null)
   const [recentDreams, setRecentDreams] = useState<any[]>([])
 

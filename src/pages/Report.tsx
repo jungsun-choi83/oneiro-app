@@ -7,7 +7,7 @@ import LanguageSelector from '../components/LanguageSelector'
 export default function Report() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { dreamResult, dreamText } = useDreamStore()
+  const { dreamResult } = useDreamStore()
   const [report, setReport] = useState<string>('')
 
   useEffect(() => {
