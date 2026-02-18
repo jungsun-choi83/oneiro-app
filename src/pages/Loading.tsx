@@ -89,8 +89,34 @@ export default function Loading() {
         }
 
         const telegramUserId = getTelegramUserId()
+
+        // Telegram에서 열지 않았을 때(브라우저 직접 접속 등): mock 데이터로 결과 표시
         if (!telegramUserId) {
-          throw new Error('Telegram user ID not found')
+          await new Promise(resolve => setTimeout(resolve, 3000))
+          const mockResult = {
+            essence: "Your dream reveals hidden emotions seeking expression.",
+            hiddenMeaning: "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries the transformative power of the ocean that could change your destiny.",
+            symbols: [
+              { emoji: "🌊", name: "Ocean", meaning: "Deep emotions and the unconscious" },
+              { emoji: "🦋", name: "Butterfly", meaning: "Transformation and change" },
+              { emoji: "🌙", name: "Moon", meaning: "Intuition and feminine energy" }
+            ],
+            deepInsight: "Your dream is a window into your subconscious mind. The symbols you encountered represent aspects of your inner world that are seeking recognition. The ocean symbolizes the depth of your emotions, while the butterfly suggests you are in a period of transformation. The moon's presence indicates that your intuition is guiding you through this phase of change. Pay attention to the feelings these symbols evoke, as they hold keys to understanding your current life situation.",
+            psychologicalShadow: "From a Jungian perspective, the ocean in your dream represents the vast unconscious realm where repressed emotions and archetypal patterns reside. The depth suggests you are being called to explore aspects of yourself that have been submerged. The butterfly transformation indicates your shadow is ready to integrate, moving from one state of being to another. This is a powerful moment of individuation where your conscious and unconscious minds are seeking balance.",
+            easternProphecy: "In Eastern divination, water (海) represents wisdom and emotional flow. The appearance of water in your dream during this period suggests favorable changes in your emotional and financial realms. The butterfly (蝴蝶) is an auspicious symbol indicating transformation and new beginnings. Combined with the moon (月), which represents yin energy and intuition, this dream suggests a period of 3-6 months where your inner wisdom will guide you toward significant life changes. The timing is propitious for making important decisions.",
+            spiritualAdvice: "Your dream is a spiritual call to embrace your emotional depth. Practice daily meditation near water if possible, or visualize yourself floating in a calm ocean. The butterfly teaches you to trust the process of transformation—what feels like endings are actually beginnings. Keep a dream journal for the next 30 days to track patterns. The moon's energy suggests you should pay attention to your intuition, especially during the new and full moon phases. Create a small altar with symbols of water and transformation to honor this spiritual message.",
+            advice: [
+              "Take time for self-reflection today",
+              "Trust your intuition when making decisions",
+              "Express your emotions through creative activities"
+            ],
+            emotionalTone: "contemplative",
+            spiritualMessage: "Your soul is communicating through these symbols. Trust the messages you receive and allow yourself to grow through this understanding."
+          }
+          setDreamResult(mockResult)
+          setProgress(100)
+          setTimeout(() => navigate('/result'), 500)
+          return
         }
 
         const { data, error: apiError } = await supabase.functions.invoke('interpret-dream', {
