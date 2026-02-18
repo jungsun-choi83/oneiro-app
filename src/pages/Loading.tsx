@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
@@ -19,6 +19,7 @@ export default function Loading() {
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [moonPhase, setMoonPhase] = useState(0)
+  const doneRef = useRef(false)
 
   useEffect(() => {
     // Moon animation
@@ -54,6 +55,7 @@ export default function Loading() {
   }, [])
 
   useEffect(() => {
+    doneRef.current = false
     const interpretDream = async () => {
       const requestLang = requestLangFromNav ?? (interpretLanguage || i18n.language || 'en').split('-')[0]
       try {
@@ -100,6 +102,7 @@ export default function Loading() {
           
           setDreamResult(mockResult)
           setProgress(100)
+          doneRef.current = true
           setTimeout(() => navigate('/result'), 500)
           return
         }
@@ -151,6 +154,7 @@ export default function Loading() {
           }
           setDreamResult(mockResult)
           setProgress(100)
+          doneRef.current = true
           setTimeout(() => navigate('/result'), 500)
           return
         }
@@ -165,30 +169,42 @@ export default function Loading() {
           },
         })
 
-        if (apiError) throw apiError
+        if (apiError) {
+          const msg = (apiError as { context?: { body?: { error?: string } } })?.context?.body?.error
+            || (apiError as Error).message
+          throw new Error(msg || 'Interpretation failed. Please try again.')
+        }
+        if (data?.error) {
+          throw new Error(typeof data.error === 'string' ? data.error : 'Interpretation failed. Please try again.')
+        }
 
         setDreamResult(data)
         setProgress(100)
-
+        doneRef.current = true
         setTimeout(() => {
           navigate('/result')
         }, 500)
       } catch (err) {
         console.error('Error interpreting dream:', err)
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        doneRef.current = true
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        const friendly = msg.includes('non-2xx') || msg.includes('Edge')
+          ? (t('error.serverError', { defaultValue: '서버 일시 오류입니다. 잠시 후 다시 시도해 주세요.' }))
+          : msg
+        setError(friendly)
       }
     }
 
     const timeout = setTimeout(() => {
-      if (!error) {
-        setError('Request timeout')
+      if (!doneRef.current) {
+        setError(t('error.timeout', { defaultValue: '요청 시간이 초과되었습니다. 다시 시도해 주세요.' }))
       }
     }, 10000)
 
     interpretDream()
 
     return () => clearTimeout(timeout)
-  }, [dreamText, mood, isRecurring, navigate, setDreamResult, error, requestLangFromNav, interpretLanguage])
+  }, [dreamText, mood, isRecurring, navigate, setDreamResult, requestLangFromNav, interpretLanguage])
 
   const moonSize = 20 + (moonPhase / 100) * 60
   const moonOpacity = 0.3 + (moonPhase / 100) * 0.7

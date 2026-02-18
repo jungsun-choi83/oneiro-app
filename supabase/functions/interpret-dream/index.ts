@@ -3,6 +3,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || ''
 
+function errRes(message: string, status: number) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+  })
+}
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
@@ -15,13 +22,25 @@ serve(async (req) => {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
   }
   try {
-    const { dreamText, mood, isRecurring, telegramUserId, language } = await req.json()
+    const body = await req.json()
+    const dreamText = body.dreamText
+    const mood = body.mood
+    const isRecurring = body.isRecurring
+    const language = body.language
+    const telegramUserId = body.telegramUserId != null ? Number(body.telegramUserId) : NaN
 
-    if (!dreamText || !telegramUserId) {
+    if (!dreamText?.trim()) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing dream text' }),
         { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       )
+    }
+    if (Number.isNaN(telegramUserId) || telegramUserId === 0) {
+      return errRes('Telegram user ID required. Open the app from Telegram.', 400)
+    }
+
+    if (!OPENAI_API_KEY) {
+      return errRes('OpenAI not configured on server.', 503)
     }
 
     const lang = language || 'en'
@@ -90,11 +109,22 @@ unresolved issues or important life transitions.`
     })
 
     if (!openaiResponse.ok) {
-      throw new Error('OpenAI API error')
+      const errText = await openaiResponse.text()
+      console.error('OpenAI error:', openaiResponse.status, errText)
+      return errRes(`OpenAI API error (${openaiResponse.status}). Try again later.`, 502)
     }
 
     const openaiData = await openaiResponse.json()
-    const result = JSON.parse(openaiData.choices[0].message.content)
+    const rawContent = openaiData.choices?.[0]?.message?.content
+    if (!rawContent) {
+      return errRes('Invalid response from AI. Please try again.', 502)
+    }
+    let result: unknown
+    try {
+      result = JSON.parse(rawContent)
+    } catch {
+      return errRes('Interpretation format error. Please try again.', 502)
+    }
 
     // Save to database
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
@@ -110,7 +140,7 @@ unresolved issues or important life transitions.`
     let userId = user?.id
 
     if (!userId) {
-      const { data: newUser } = await supabase
+      const { data: newUser, error: insertUserErr } = await supabase
         .from('dream_users')
         .insert({
           telegram_id: telegramUserId,
@@ -118,10 +148,14 @@ unresolved issues or important life transitions.`
         })
         .select()
         .single()
-      userId = newUser?.id
+      if (insertUserErr || !newUser?.id) {
+        console.error('dream_users insert error:', insertUserErr)
+        return errRes('Failed to create user. Please try again.', 503)
+      }
+      userId = newUser.id
     }
 
-    await supabase.from('dreams').insert({
+    const { error: insertError } = await supabase.from('dreams').insert({
       user_id: userId,
       telegram_id: telegramUserId,
       dream_text: dreamText,
@@ -130,14 +164,18 @@ unresolved issues or important life transitions.`
       result: result,
     })
 
+    if (insertError) {
+      console.error('DB insert error:', insertError)
+      return errRes('Failed to save dream. Please try again.', 503)
+    }
+
     return new Response(
       JSON.stringify(result),
       { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
-    )
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('interpret-dream error:', message, error)
+    return errRes(message, 500)
   }
 })
