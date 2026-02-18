@@ -60,8 +60,12 @@ export default function Visualize() {
   }
 
   const handleShare = () => {
-    if (dreamImage && window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(dreamImage)
+    try {
+      if (dreamImage && window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(dreamImage)
+      }
+    } catch {
+      if (dreamImage) window.open(dreamImage, '_blank')
     }
   }
 

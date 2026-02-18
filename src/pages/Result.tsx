@@ -45,8 +45,15 @@ export default function Result({ fullReading = false }: ResultProps) {
   }
 
   const showMsg = (msg: string) => {
-    if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert(msg)
-    else alert(msg)
+    try {
+      if (window.Telegram?.WebApp?.showAlert) {
+        window.Telegram.WebApp.showAlert(msg)
+      } else {
+        alert(msg)
+      }
+    } catch {
+      alert(msg)
+    }
   }
 
   const isInTelegram = typeof window !== 'undefined' && !!window.Telegram?.WebApp
@@ -79,7 +86,7 @@ export default function Result({ fullReading = false }: ResultProps) {
 
           setUnlocked(true)
           setShowBlur(false)
-          window.Telegram?.WebApp?.showAlert?.('Free credit used! Enjoy your full reading.')
+          showMsg('Free credit used! Enjoy your full reading.')
           return
         }
       } catch (err) {
@@ -98,21 +105,25 @@ export default function Result({ fullReading = false }: ResultProps) {
 
       if (error) throw error
 
-      if (window.Telegram?.WebApp?.openInvoice) {
-        window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
-          if (status === 'paid') {
-            setUnlocked(true)
-            setShowBlur(false)
-            if (userProfile) {
-              useDreamStore.getState().setUserProfile({
-                ...userProfile,
-                freeReadingsUsed: userProfile.freeReadingsUsed + 1,
-              })
+      try {
+        if (window.Telegram?.WebApp?.openInvoice) {
+          window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
+            if (status === 'paid') {
+              setUnlocked(true)
+              setShowBlur(false)
+              if (userProfile) {
+                useDreamStore.getState().setUserProfile({
+                  ...userProfile,
+                  freeReadingsUsed: userProfile.freeReadingsUsed + 1,
+                })
+              }
             }
-          }
-        })
-      } else {
-        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
+          })
+        } else {
+          showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
+        }
+      } catch (e) {
+        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇을 열어 이용해 주세요.')
       }
     } catch (err) {
       console.error('Payment error:', err)
@@ -137,12 +148,16 @@ export default function Result({ fullReading = false }: ResultProps) {
 
       if (error) throw error
 
-      if (window.Telegram?.WebApp?.openInvoice) {
-        window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
-          if (status === 'paid') navigate('/visualize')
-        })
-      } else {
-        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
+      try {
+        if (window.Telegram?.WebApp?.openInvoice) {
+          window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
+            if (status === 'paid') navigate('/visualize')
+          })
+        } else {
+          showMsg('결제는 텔레그램 앱에서 봇을 열어 이용해 주세요.')
+        }
+      } catch {
+        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇을 열어 주세요.')
       }
     } catch (err) {
       console.error('Payment error:', err)
@@ -167,12 +182,16 @@ export default function Result({ fullReading = false }: ResultProps) {
 
       if (error) throw error
 
-      if (window.Telegram?.WebApp?.openInvoice) {
-        window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
-          if (status === 'paid') navigate('/report')
-        })
-      } else {
-        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
+      try {
+        if (window.Telegram?.WebApp?.openInvoice) {
+          window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
+            if (status === 'paid') navigate('/report')
+          })
+        } else {
+          showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
+        }
+      } catch {
+        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇을 열어 주세요.')
       }
     } catch (err) {
       console.error('Payment error:', err)
@@ -198,7 +217,8 @@ export default function Result({ fullReading = false }: ResultProps) {
   }
 
   const handleSave = () => {
-    if (dreamResult) {
+    if (!dreamResult) return
+    try {
       addToJournal({
         id: Date.now().toString(),
         dreamText,
@@ -209,6 +229,9 @@ export default function Result({ fullReading = false }: ResultProps) {
         createdAt: new Date().toISOString(),
       })
       showMsg(t('result.saved', { defaultValue: '꿈 일기에 저장되었습니다!' }))
+    } catch (e) {
+      console.error('Save journal error:', e)
+      showMsg(t('result.saveFailed', { defaultValue: '저장에 실패했습니다. 다시 시도해 주세요.' }))
     }
   }
 
@@ -233,8 +256,12 @@ export default function Result({ fullReading = false }: ResultProps) {
     e.preventDefault()
     e.stopPropagation()
     if (action === 'test') {
-      if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
-      else alert('클릭됨!')
+      try {
+        if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
+        else alert('클릭됨!')
+      } catch {
+        alert('클릭됨!')
+      }
       return
     }
     if (action === 'visualize') handleVisualize()
@@ -277,8 +304,12 @@ export default function Result({ fullReading = false }: ResultProps) {
       const h = handlersRef.current
       if (!h) return
       if (action === 'test') {
-        if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
-        else alert('클릭됨!')
+        try {
+          if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
+          else alert('클릭됨!')
+        } catch {
+          alert('클릭됨!')
+        }
         return
       }
       if (action === 'visualize') h.visualize()
@@ -320,8 +351,12 @@ export default function Result({ fullReading = false }: ResultProps) {
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
-          else alert('클릭됨!')
+          try {
+            if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
+            else alert('클릭됨!')
+          } catch {
+            alert('클릭됨!')
+          }
         }}
       >
         🔧 테스트: 여기 눌러보세요 (클릭되면 알림)

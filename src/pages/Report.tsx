@@ -49,11 +49,15 @@ export default function Report() {
   }
 
   const handleShare = () => {
-    if (window.Telegram?.WebApp?.openLink) {
-      const shareText = `My Soul Message Report from ONEIRO 🌙\n\n${dreamResult?.essence}`
-      window.Telegram.WebApp.openLink(
-        `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
-      )
+    try {
+      if (window.Telegram?.WebApp?.openLink) {
+        const shareText = `My Soul Message Report from ONEIRO 🌙\n\n${dreamResult?.essence}`
+        window.Telegram.WebApp.openLink(
+          `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
+        )
+      }
+    } catch {
+      // WebApp 메서드 미지원 시 무시 (브라우저 등)
     }
   }
 

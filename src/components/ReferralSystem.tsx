@@ -64,26 +64,47 @@ export default function ReferralSystem() {
   }
 
   const showMsg = (msg: string) => {
-    if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert(msg)
-    else alert(msg)
+    try {
+      if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert(msg)
+      else alert(msg)
+    } catch {
+      alert(msg)
+    }
   }
 
   const handleCopyLink = () => {
-    const referralLink = `https://t.me/ONEIRO83Bot?start=${referralCode}`
-    navigator.clipboard.writeText(referralLink).then(() => {
-      showMsg(t('referral.copied', { defaultValue: '초대 링크가 복사되었습니다!' }))
-    }).catch(() => showMsg(referralLink))
+    try {
+      const referralLink = `https://t.me/ONEIRO83Bot?start=${referralCode}`
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(referralLink).then(() => {
+          showMsg(t('referral.copied', { defaultValue: '초대 링크가 복사되었습니다!' }))
+        }).catch(() => {
+          showMsg(t('referral.copyHint', { defaultValue: '초대 링크가 복사되지 않았습니다. 위 코드를 수동으로 공유해 주세요.' }))
+        })
+      } else {
+        showMsg(referralLink)
+      }
+    } catch (e) {
+      console.error('Copy link error:', e)
+      showMsg(t('referral.copyHint', { defaultValue: '초대 링크가 복사되지 않았습니다. 위 코드를 수동으로 공유해 주세요.' }))
+    }
   }
 
   const handleShare = () => {
     const referralLink = `https://t.me/ONEIRO83Bot?start=${referralCode}`
     const shareText = `🔮 꿈이 전하는 메시지를 발견해 보세요! 내 초대 링크로 무료 해몽을 받아가세요: ${referralLink}`
     
-    if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(
-        `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
-      )
-    } else {
+    try {
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(
+          `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
+        )
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+          showMsg(t('referral.copied', { defaultValue: '공유 문구가 복사되었습니다. 텔레그램 등에 붙여넣기 하세요.' }))
+        }).catch(() => showMsg(shareText))
+      }
+    } catch {
       navigator.clipboard.writeText(shareText).then(() => {
         showMsg(t('referral.copied', { defaultValue: '공유 문구가 복사되었습니다. 텔레그램 등에 붙여넣기 하세요.' }))
       }).catch(() => showMsg(shareText))
