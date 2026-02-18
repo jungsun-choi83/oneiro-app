@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
@@ -20,7 +21,6 @@ export default function Result({ fullReading = false }: ResultProps) {
   const [hydrated, setHydrated] = useState(false)
   const lastActionRef = useRef<{ name: string; time: number }>({ name: '', time: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
-  const testButtonRef = useRef<HTMLButtonElement>(null)
   const handlersRef = useRef<{
     visualize: () => void
     report: () => void
@@ -232,6 +232,11 @@ export default function Result({ fullReading = false }: ResultProps) {
     lastActionRef.current = { name: action, time: now }
     e.preventDefault()
     e.stopPropagation()
+    if (action === 'test') {
+      if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
+      else alert('클릭됨!')
+      return
+    }
     if (action === 'visualize') handleVisualize()
     else if (action === 'report') handleReport()
     else if (action === 'share') handleShare()
@@ -250,7 +255,17 @@ export default function Result({ fullReading = false }: ResultProps) {
   // document 레벨 리스너: 이벤트가 어디서든 잡히도록 (근본 해결)
   useEffect(() => {
     const handleDocClick = (e: Event) => {
-      const target = (e.target as HTMLElement).closest('[data-result-action]')
+      const el = e.target as HTMLElement
+      const target = el.closest('[data-result-action]')
+      const isDebug = typeof window !== 'undefined' && window.location.search.includes('debug=1')
+      if (isDebug) {
+        console.log('[Result 클릭]', {
+          tag: el.tagName,
+          id: el.id,
+          className: el.className?.slice(0, 80),
+          dataAction: target?.getAttribute('data-result-action') ?? '(없음)',
+        })
+      }
       if (!target) return
       const action = target.getAttribute('data-result-action')
       if (!action) return
@@ -261,6 +276,11 @@ export default function Result({ fullReading = false }: ResultProps) {
       lastActionRef.current = { name: action, time: now }
       const h = handlersRef.current
       if (!h) return
+      if (action === 'test') {
+        if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
+        else alert('클릭됨!')
+        return
+      }
       if (action === 'visualize') h.visualize()
       else if (action === 'report') h.report()
       else if (action === 'share') h.share()
@@ -275,37 +295,51 @@ export default function Result({ fullReading = false }: ResultProps) {
     }
   }, [])
 
-  // 테스트: 이 버튼만 ref로 직접 리스너 → 클릭이 아예 안 오는지 확인
-  useEffect(() => {
-    const el = testButtonRef.current
-    if (!el) return
-    const onTest = () => {
-      if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨! 버튼이 동작합니다.')
-      else alert('클릭됨! 버튼이 동작합니다.')
-    }
-    el.addEventListener('click', onTest)
-    return () => el.removeEventListener('click', onTest)
-  }, [])
+  // 테스트 바: body에 포털로 렌더 → 레이아웃/캐시와 무관하게 항상 최상단에 표시
+  const testBar = (
+    <div
+      id="result-test-bar"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 2147483647,
+        padding: '12px 16px',
+        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+        borderBottom: '3px solid #b45309',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        touchAction: 'manipulation',
+      }}
+    >
+      <button
+        type="button"
+        data-result-action="test"
+        className="result-action-btn w-full py-3 text-black font-bold rounded-lg border-0 cursor-pointer"
+        style={{ background: 'rgba(255,255,255,0.95)' }}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
+          else alert('클릭됨!')
+        }}
+      >
+        🔧 테스트: 여기 눌러보세요 (클릭되면 알림)
+      </button>
+    </div>
+  )
 
   return (
-    <div className="min-h-screen bg-gradient-midnight p-6">
-      <div
-        ref={containerRef}
-        className="max-w-2xl mx-auto"
-        onClick={handleDelegatedAction}
-        onPointerDown={handleDelegatedAction}
-        role="presentation"
-      >
-        {/* 테스트: 이걸 눌러서 "클릭됨!" 나오면 클릭은 됨. 안 나오면 배포/캐시 문제일 수 있음 */}
-        <div className="mb-4 p-3 bg-indigo/20 rounded-lg border border-indigo/50">
-          <button
-            ref={testButtonRef}
-            type="button"
-            className="w-full py-2 text-white font-medium border border-indigo rounded-lg"
-          >
-            🔧 테스트: 여기 눌러보세요 (클릭되면 알림이 뜹니다)
-          </button>
-        </div>
+    <>
+      {typeof document !== 'undefined' && createPortal(testBar, document.body)}
+      <div className="min-h-screen bg-gradient-midnight p-6" style={{ paddingTop: 72 }}>
+        <div
+          ref={containerRef}
+          className="max-w-2xl mx-auto"
+          onClick={handleDelegatedAction}
+          onPointerDown={handleDelegatedAction}
+          role="presentation"
+        >
         {/* Language Selector */}
         <div className="flex justify-end mb-4">
           <LanguageSelector />
@@ -496,5 +530,6 @@ export default function Result({ fullReading = false }: ResultProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }

@@ -3,6 +3,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || ''
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
+}
+
 const SYMBOLS_POOL = [
   { emoji: '🦋', name: 'Butterfly', meaning: 'Transformation is near. Pay attention to changes in your life.' },
   { emoji: '🌊', name: 'Ocean', meaning: 'Emotions run deep. Trust your intuition.' },
@@ -17,8 +24,11 @@ const SYMBOLS_POOL = [
 ]
 
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   try {
-    const { date } = await req.json()
+    const { date } = await req.json().catch(() => ({}))
     const today = date || new Date().toDateString()
 
     // Use date as seed for consistent daily symbol
@@ -56,7 +66,7 @@ serve(async (req) => {
         const enhanced = JSON.parse(gptData.choices[0].message.content)
         return new Response(
           JSON.stringify(enhanced),
-          { headers: { 'Content-Type': 'application/json' } }
+          { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
         )
       }
     } catch (err) {
@@ -65,12 +75,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(symbol),
-      { headers: { 'Content-Type': 'application/json' } }
+      { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     )
   }
 })

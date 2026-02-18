@@ -46,7 +46,8 @@
     pointer-events: auto;
   }
   [data-result-action],
-  [data-referral-action] {
+  [data-referral-action],
+  .clickable {
     cursor: pointer;
     pointer-events: auto;
   }
