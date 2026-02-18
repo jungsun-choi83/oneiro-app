@@ -30,6 +30,10 @@
   "result": {
     "essence": "The Essence",
     "hiddenMeaning": "The Hidden Meaning",
+    "openInTelegram": "Please open the bot in Telegram to use payments.",
+    "openInTelegramFromMenu": "Open the app again from the bot menu button. (Payments and credits only work inside the Telegram app)",
+    "copied": "Share text copied. Paste it wherever you like.",
+    "saved": "Saved to Dream Journal!",
     "symbols": "Key Symbols",
     "insight": "Deep Insight",
     "unlock": "Unlock Full Reading",
@@ -58,7 +62,9 @@
     "copy": "Copy Link",
     "share": "Share",
     "progress": "Invited Friends",
-    "unlocked": "Free credit unlocked! Use it now."
+    "unlocked": "Free credit unlocked! Use it now.",
+    "copied": "Referral link copied!",
+    "yourCode": "Your Referral Code"
   },
   "visualize": {
     "loading": "Painting your dreamscape...",

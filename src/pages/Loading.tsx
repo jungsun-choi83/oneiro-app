@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
 import { supabase } from '../lib/supabase'
 import { getTelegramUserId } from '../lib/telegram'
 import LanguageSelector from '../components/LanguageSelector'
+import i18n from '../i18n/config'
 
 const LOADING_STEPS = ['step1', 'step2', 'step3']
 
 export default function Loading() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { dreamText, mood, isRecurring, setDreamResult } = useDreamStore()
+  const location = useLocation()
+  const { dreamText, mood, isRecurring, setDreamResult, interpretLanguage } = useDreamStore()
+  const requestLangFromNav = (location.state as { requestLanguage?: string })?.requestLanguage
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -52,13 +55,29 @@ export default function Loading() {
 
   useEffect(() => {
     const interpretDream = async () => {
+      const requestLang = requestLangFromNav ?? (interpretLanguage || i18n.language || 'en').split('-')[0]
       try {
         // Check if Supabase is configured
         if (!supabase || !import.meta.env.VITE_SUPABASE_URL) {
           // Use mock data for development
           await new Promise(resolve => setTimeout(resolve, 3000)) // Simulate API delay
-          
-          const mockResult = {
+          const devIsKo = requestLang === 'ko'
+          const mockResult = devIsKo ? {
+            essence: "당신의 꿈은 표현을 갈구하는 숨겨진 감정을 드러냅니다.",
+            hiddenMeaning: "당신의 무의식이 숨기고 있는 거대한 신호가 발견되었습니다. 이 꿈은 단순한 기억이 아니라 당신의 운명을 바꿀 바다의 변혁적 힘을 품고 있습니다.",
+            symbols: [
+              { emoji: "🌊", name: "바다", meaning: "깊은 감정과 무의식" },
+              { emoji: "🦋", name: "나비", meaning: "변화와 변형" },
+              { emoji: "🌙", name: "달", meaning: "직관과 여성적 에너지" }
+            ],
+            deepInsight: "당신의 꿈은 무의식의 세계로 열리는 창입니다. 꿈속 상징들은 인정을 갈구하는 내면의 측면을 나타냅니다.",
+            psychologicalShadow: "융의 관점에서, 꿈속 바다는 억압된 감정과 원형이 머무는 무의식의 영역을 상징합니다.",
+            easternProphecy: "동양 해몽에서 물(海)은 지혜와 감정의 흐름을 나타냅니다.",
+            spiritualAdvice: "물가에서 명상하거나 고요한 바다를 상상해 보세요. 30일간 꿈 일기를 써 보세요.",
+            advice: ["오늘 하루 자기 성찰 시간을 가지세요", "결정할 때 직관을 믿으세요", "창작 활동으로 감정을 표현해 보세요"],
+            emotionalTone: "명상적",
+            spiritualMessage: "영혼이 이 상징들을 통해 말하고 있습니다. 전해지는 메시지를 믿고 성장을 받아들이세요."
+          } : {
             essence: "Your dream reveals hidden emotions seeking expression.",
             hiddenMeaning: "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries the transformative power of the ocean that could change your destiny.",
             symbols: [
@@ -81,10 +100,7 @@ export default function Loading() {
           
           setDreamResult(mockResult)
           setProgress(100)
-
-          setTimeout(() => {
-            navigate('/result')
-          }, 500)
+          setTimeout(() => navigate('/result'), 500)
           return
         }
 
@@ -93,7 +109,27 @@ export default function Loading() {
         // Telegram에서 열지 않았을 때(브라우저 직접 접속 등): mock 데이터로 결과 표시
         if (!telegramUserId) {
           await new Promise(resolve => setTimeout(resolve, 3000))
-          const mockResult = {
+          const isKo = requestLang === 'ko'
+          const mockResult = isKo ? {
+            essence: "당신의 꿈은 표현을 갈구하는 숨겨진 감정을 드러냅니다.",
+            hiddenMeaning: "당신의 무의식이 숨기고 있는 거대한 신호가 발견되었습니다. 이 꿈은 단순한 기억이 아니라 당신의 운명을 바꿀 바다의 변혁적 힘을 품고 있습니다.",
+            symbols: [
+              { emoji: "🌊", name: "바다", meaning: "깊은 감정과 무의식" },
+              { emoji: "🦋", name: "나비", meaning: "변화와 변형" },
+              { emoji: "🌙", name: "달", meaning: "직관과 여성적 에너지" }
+            ],
+            deepInsight: "당신의 꿈은 무의식의 세계로 열리는 창입니다. 꿈속 상징들은 인정을 갈구하는 내면의 측면을 나타냅니다. 바다는 감정의 깊이를, 나비는 변형의 시기를, 달은 직관이 이 변화를 이끌고 있음을 말해줍니다.",
+            psychologicalShadow: "융의 관점에서, 꿈속 바다는 억압된 감정과 원형이 머무는 무의식의 영역을 상징합니다. 나비의 변형은 그림자가 통합될 준비가 되었음을 보여주며, 의식과 무의식의 균형을 향한 개성화의 순간입니다.",
+            easternProphecy: "동양 해몽에서 물(海)은 지혜와 감정의 흐름을 나타냅니다. 꿈속 물과 나비(蝴蝶), 달(月)의 조합은 3~6개월 내 감정·재물·직관 측면에서 유리한 변화를 암시합니다.",
+            spiritualAdvice: "물가에서 명상하거나 고요한 바다를 상상해 보세요. 나비는 끝이 아닌 시작을, 달은 보름달·그믐달에 직관에 귀 기울이라 전합니다. 30일간 꿈 일기를 써 보세요.",
+            advice: [
+              "오늘 하루 자기 성찰 시간을 가지세요",
+              "결정할 때 직관을 믿으세요",
+              "창작 활동으로 감정을 표현해 보세요"
+            ],
+            emotionalTone: "명상적",
+            spiritualMessage: "영혼이 이 상징들을 통해 말하고 있습니다. 전해지는 메시지를 믿고 성장을 받아들이세요."
+          } : {
             essence: "Your dream reveals hidden emotions seeking expression.",
             hiddenMeaning: "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries the transformative power of the ocean that could change your destiny.",
             symbols: [
@@ -125,6 +161,7 @@ export default function Loading() {
             mood,
             isRecurring,
             telegramUserId,
+            language: requestLang,
           },
         })
 
@@ -151,7 +188,7 @@ export default function Loading() {
     interpretDream()
 
     return () => clearTimeout(timeout)
-  }, [dreamText, mood, isRecurring, navigate, setDreamResult, error])
+  }, [dreamText, mood, isRecurring, navigate, setDreamResult, error, requestLangFromNav, interpretLanguage])
 
   const moonSize = 20 + (moonPhase / 100) * 60
   const moonOpacity = 0.3 + (moonPhase / 100) * 0.7

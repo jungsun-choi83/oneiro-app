@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
@@ -17,18 +17,49 @@ export default function Result({ fullReading = false }: ResultProps) {
   const { dreamResult, dreamText, mood, isRecurring, addToJournal, userProfile } = useDreamStore()
   const [unlocked, setUnlocked] = useState(fullReading || userProfile?.freeReadingsUsed === 0)
   const [showBlur, setShowBlur] = useState(!unlocked && dreamResult?.deepInsight)
+  const [hydrated, setHydrated] = useState(false)
+  const lastActionRef = useRef<{ name: string; time: number }>({ name: '', time: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+  const testButtonRef = useRef<HTMLButtonElement>(null)
+  const handlersRef = useRef<{
+    visualize: () => void
+    report: () => void
+    share: () => void
+    save: () => void
+    unlock: () => void
+  }>(null as any)
 
   useEffect(() => {
-    if (!dreamResult) {
+    setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (hydrated && !dreamResult) {
       navigate('/dream')
     }
-  }, [dreamResult, navigate])
+  }, [hydrated, dreamResult, navigate])
 
-  if (!dreamResult) return null
+  if (!dreamResult) {
+    if (!hydrated) return <div className="min-h-screen bg-gradient-midnight flex items-center justify-center"><div className="text-text-secondary">Loading...</div></div>
+    return null
+  }
+
+  const showMsg = (msg: string) => {
+    if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert(msg)
+    else alert(msg)
+  }
+
+  const isInTelegram = typeof window !== 'undefined' && !!window.Telegram?.WebApp
+  const openInTelegramMsg = isInTelegram
+    ? t('result.openInTelegramFromMenu', { defaultValue: '봇 메뉴 버튼에서 앱을 다시 열어주세요. (결제·크레딧은 텔레그램 앱 내에서만 가능합니다)' })
+    : t('result.openInTelegram', { defaultValue: '결제는 텔레그램에서 봇을 열어 이용해 주세요.' })
 
   const handleUnlock = async () => {
     const telegramUserId = getTelegramUserId()
-    if (!telegramUserId) return
+    if (!telegramUserId) {
+      showMsg(openInTelegramMsg)
+      return
+    }
 
     // Check for free credits first
     if (supabase && import.meta.env.VITE_SUPABASE_URL) {
@@ -72,7 +103,6 @@ export default function Result({ fullReading = false }: ResultProps) {
           if (status === 'paid') {
             setUnlocked(true)
             setShowBlur(false)
-            // Update user profile
             if (userProfile) {
               useDreamStore.getState().setUserProfile({
                 ...userProfile,
@@ -81,16 +111,21 @@ export default function Result({ fullReading = false }: ResultProps) {
             }
           }
         })
+      } else {
+        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
       }
     } catch (err) {
       console.error('Payment error:', err)
-      window.Telegram?.WebApp?.showAlert?.('Payment failed. Please try again.')
+      showMsg('결제 준비에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     }
   }
 
   const handleVisualize = async () => {
     const telegramUserId = getTelegramUserId()
-    if (!telegramUserId) return
+    if (!telegramUserId) {
+      showMsg(openInTelegramMsg)
+      return
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke('create-invoice', {
@@ -104,19 +139,23 @@ export default function Result({ fullReading = false }: ResultProps) {
 
       if (window.Telegram?.WebApp?.openInvoice) {
         window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
-          if (status === 'paid') {
-            navigate('/visualize')
-          }
+          if (status === 'paid') navigate('/visualize')
         })
+      } else {
+        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
       }
     } catch (err) {
       console.error('Payment error:', err)
+      showMsg('결제 준비에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     }
   }
 
   const handleReport = async () => {
     const telegramUserId = getTelegramUserId()
-    if (!telegramUserId) return
+    if (!telegramUserId) {
+      showMsg(openInTelegramMsg)
+      return
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke('create-invoice', {
@@ -130,23 +169,31 @@ export default function Result({ fullReading = false }: ResultProps) {
 
       if (window.Telegram?.WebApp?.openInvoice) {
         window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
-          if (status === 'paid') {
-            navigate('/report')
-          }
+          if (status === 'paid') navigate('/report')
         })
+      } else {
+        showMsg('결제 창을 열 수 없습니다. 텔레그램 앱에서 봇 메뉴로 앱을 열어주세요.')
       }
     } catch (err) {
       console.error('Payment error:', err)
+      showMsg('결제 준비에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     }
   }
 
   const handleShare = () => {
-    const shareText = `🔮 My dream holds a secret message... Check your own destiny with AI Dream Guide ONEIRO! 🌙\n\n${dreamResult.hiddenMeaning || dreamResult.essence}\n\nDiscover what your dreams are telling you: https://t.me/ONEIROBot`
-    
-    if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(
-        `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
-      )
+    const shareText = `🔮 My dream holds a secret message... Check your own destiny with AI Dream Guide ONEIRO! 🌙\n\n${dreamResult.hiddenMeaning || dreamResult.essence}\n\nDiscover what your dreams are telling you: https://t.me/ONEIRO83Bot`
+    try {
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(
+          `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
+        )
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+          showMsg(t('result.copied', { defaultValue: '공유 문구가 복사되었습니다. 원하는 곳에 붙여넣기 하세요.' }))
+        }).catch(() => showMsg(shareText))
+      }
+    } catch (err) {
+      showMsg(t('result.copied', { defaultValue: '공유 문구가 복사되었습니다.' }))
     }
   }
 
@@ -161,7 +208,7 @@ export default function Result({ fullReading = false }: ResultProps) {
         fullReadingUnlocked: unlocked,
         createdAt: new Date().toISOString(),
       })
-      window.Telegram?.WebApp?.showAlert?.('Saved to Dream Journal!')
+      showMsg(t('result.saved', { defaultValue: '꿈 일기에 저장되었습니다!' }))
     }
   }
 
@@ -174,9 +221,91 @@ export default function Result({ fullReading = false }: ResultProps) {
         : dreamResult.deepInsight)
     : (insightSentences.length > 0 ? insightSentences.slice(0, 2).join('. ') + '.' : '')
 
+  // 위임 클릭: 텔레그램 웹뷰에서 버튼 onClick이 안 먹을 때를 대비해, 영역 터치만으로 동작
+  const handleDelegatedAction = (e: React.MouseEvent | React.PointerEvent) => {
+    const el = (e.target as HTMLElement).closest('[data-result-action]')
+    if (!el) return
+    const action = el.getAttribute('data-result-action')
+    if (!action) return
+    const now = Date.now()
+    if (lastActionRef.current.name === action && now - lastActionRef.current.time < 500) return
+    lastActionRef.current = { name: action, time: now }
+    e.preventDefault()
+    e.stopPropagation()
+    if (action === 'visualize') handleVisualize()
+    else if (action === 'report') handleReport()
+    else if (action === 'share') handleShare()
+    else if (action === 'save') handleSave()
+    else if (action === 'unlock') handleUnlock()
+  }
+
+  handlersRef.current = {
+    visualize: handleVisualize,
+    report: handleReport,
+    share: handleShare,
+    save: handleSave,
+    unlock: handleUnlock,
+  }
+
+  // document 레벨 리스너: 이벤트가 어디서든 잡히도록 (근본 해결)
+  useEffect(() => {
+    const handleDocClick = (e: Event) => {
+      const target = (e.target as HTMLElement).closest('[data-result-action]')
+      if (!target) return
+      const action = target.getAttribute('data-result-action')
+      if (!action) return
+      e.preventDefault()
+      e.stopPropagation()
+      const now = Date.now()
+      if (lastActionRef.current.name === action && now - lastActionRef.current.time < 500) return
+      lastActionRef.current = { name: action, time: now }
+      const h = handlersRef.current
+      if (!h) return
+      if (action === 'visualize') h.visualize()
+      else if (action === 'report') h.report()
+      else if (action === 'share') h.share()
+      else if (action === 'save') h.save()
+      else if (action === 'unlock') h.unlock()
+    }
+    document.addEventListener('click', handleDocClick, true)
+    document.addEventListener('pointerdown', handleDocClick, true)
+    return () => {
+      document.removeEventListener('click', handleDocClick, true)
+      document.removeEventListener('pointerdown', handleDocClick, true)
+    }
+  }, [])
+
+  // 테스트: 이 버튼만 ref로 직접 리스너 → 클릭이 아예 안 오는지 확인
+  useEffect(() => {
+    const el = testButtonRef.current
+    if (!el) return
+    const onTest = () => {
+      if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨! 버튼이 동작합니다.')
+      else alert('클릭됨! 버튼이 동작합니다.')
+    }
+    el.addEventListener('click', onTest)
+    return () => el.removeEventListener('click', onTest)
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-midnight p-6">
-      <div className="max-w-2xl mx-auto">
+      <div
+        ref={containerRef}
+        className="max-w-2xl mx-auto"
+        onClick={handleDelegatedAction}
+        onPointerDown={handleDelegatedAction}
+        role="presentation"
+      >
+        {/* 테스트: 이걸 눌러서 "클릭됨!" 나오면 클릭은 됨. 안 나오면 배포/캐시 문제일 수 있음 */}
+        <div className="mb-4 p-3 bg-indigo/20 rounded-lg border border-indigo/50">
+          <button
+            ref={testButtonRef}
+            type="button"
+            className="w-full py-2 text-white font-medium border border-indigo rounded-lg"
+          >
+            🔧 테스트: 여기 눌러보세요 (클릭되면 알림이 뜹니다)
+          </button>
+        </div>
         {/* Language Selector */}
         <div className="flex justify-end mb-4">
           <LanguageSelector />
@@ -207,7 +336,7 @@ export default function Result({ fullReading = false }: ResultProps) {
             {t('result.symbols')}
           </h2>
           <div className="flex flex-wrap gap-3">
-            {dreamResult.symbols.map((symbol, idx) => (
+            {(dreamResult.symbols || []).map((symbol, idx) => (
               <div
                 key={idx}
                 className="px-4 py-2 bg-indigo/20 border border-indigo/30 rounded-lg"
@@ -262,8 +391,10 @@ export default function Result({ fullReading = false }: ResultProps) {
                     <div className="absolute inset-0 bg-gradient-midnight blur-sm" />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <button
+                        type="button"
+                        data-result-action="unlock"
                         onClick={handleUnlock}
-                        className="btn-primary z-10"
+                        className="btn-primary z-10 result-action-btn"
                       >
                         {t('result.unlock')} — {t('result.stars', { count: 50 })}
                       </button>
@@ -282,7 +413,7 @@ export default function Result({ fullReading = false }: ResultProps) {
               {t('result.advice')}
             </h2>
             <div className="space-y-3">
-              {dreamResult.advice.map((item, idx) => (
+              {(dreamResult.advice || []).map((item, idx) => (
                 <div
                   key={idx}
                   className="flex items-start gap-3 p-4 bg-secondary/50 rounded-lg border border-tertiary"
@@ -307,9 +438,15 @@ export default function Result({ fullReading = false }: ResultProps) {
           </div>
         )}
 
-        {/* Upsell Cards */}
+        {/* Upsell + Referral: ensure above overlays and tappable in Telegram */}
+        <div className="relative z-10 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="card cursor-pointer hover:shadow-moonlight transition-all" onClick={handleVisualize}>
+          <button
+            type="button"
+            data-result-action="visualize"
+            className="result-action-btn card cursor-pointer hover:shadow-moonlight transition-all text-left w-full border-0 touch-manipulation active:opacity-90 min-h-[56px] select-none"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVisualize() }}
+          >
             <h3 className="text-xl font-bold text-white mb-2">
               {t('result.upsell.visualize.title')}
             </h3>
@@ -319,9 +456,14 @@ export default function Result({ fullReading = false }: ResultProps) {
             <div className="text-indigo-light font-semibold">
               {t('result.upsell.visualize.price')}
             </div>
-          </div>
+          </button>
 
-          <div className="card cursor-pointer hover:shadow-moonlight transition-all" onClick={handleReport}>
+          <button
+            type="button"
+            data-result-action="report"
+            className="result-action-btn card cursor-pointer hover:shadow-moonlight transition-all text-left w-full border-0 touch-manipulation active:opacity-90 min-h-[56px] select-none"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleReport() }}
+          >
             <h3 className="text-xl font-bold text-white mb-2">
               {t('result.upsell.report.title')}
             </h3>
@@ -331,7 +473,7 @@ export default function Result({ fullReading = false }: ResultProps) {
             <div className="text-indigo-light font-semibold">
               {t('result.upsell.report.price')}
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Referral System */}
@@ -339,10 +481,10 @@ export default function Result({ fullReading = false }: ResultProps) {
 
         {/* Actions */}
         <div className="flex gap-4 mb-6">
-          <button onClick={handleShare} className="btn-primary flex-1">
+          <button type="button" data-result-action="share" onClick={(e) => { e.stopPropagation(); handleShare() }} className="btn-primary flex-1 min-h-[48px] result-action-btn">
             {t('result.share')}
           </button>
-          <button onClick={handleSave} className="btn-primary flex-1">
+          <button type="button" data-result-action="save" onClick={(e) => { e.stopPropagation(); handleSave() }} className="btn-primary flex-1 min-h-[48px] result-action-btn">
             {t('result.save')}
           </button>
         </div>
@@ -350,6 +492,7 @@ export default function Result({ fullReading = false }: ResultProps) {
         {/* Cross Promotion */}
         <div className="text-center text-text-secondary text-sm">
           {t('result.crossPromo')}
+        </div>
         </div>
       </div>
     </div>

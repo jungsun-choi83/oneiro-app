@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { getTelegramUserId } from '../lib/telegram'
@@ -8,6 +8,9 @@ export default function ReferralSystem() {
   const [referralCount, setReferralCount] = useState(0)
   const [referralCode, setReferralCode] = useState('')
   const [isUnlocked, setIsUnlocked] = useState(false)
+  const lastRefAction = useRef<{ name: string; time: number }>({ name: '', time: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+  const handlersRef = useRef<{ copy: () => void; share: () => void }>(null as any)
 
   useEffect(() => {
     loadReferralData()
@@ -60,25 +63,80 @@ export default function ReferralSystem() {
     }
   }
 
+  const showMsg = (msg: string) => {
+    if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert(msg)
+    else alert(msg)
+  }
+
   const handleCopyLink = () => {
-    const referralLink = `https://t.me/ONEIROBot?start=${referralCode}`
-    navigator.clipboard.writeText(referralLink)
-    window.Telegram?.WebApp?.showAlert?.('Referral link copied!')
+    const referralLink = `https://t.me/ONEIRO83Bot?start=${referralCode}`
+    navigator.clipboard.writeText(referralLink).then(() => {
+      showMsg(t('referral.copied', { defaultValue: '초대 링크가 복사되었습니다!' }))
+    }).catch(() => showMsg(referralLink))
   }
 
   const handleShare = () => {
-    const referralLink = `https://t.me/ONEIROBot?start=${referralCode}`
-    const shareText = `🔮 Discover what your dreams are telling you! Use my referral code to unlock free dream interpretations: ${referralLink}`
+    const referralLink = `https://t.me/ONEIRO83Bot?start=${referralCode}`
+    const shareText = `🔮 꿈이 전하는 메시지를 발견해 보세요! 내 초대 링크로 무료 해몽을 받아가세요: ${referralLink}`
     
     if (window.Telegram?.WebApp?.openLink) {
       window.Telegram.WebApp.openLink(
         `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
       )
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        showMsg(t('referral.copied', { defaultValue: '공유 문구가 복사되었습니다. 텔레그램 등에 붙여넣기 하세요.' }))
+      }).catch(() => showMsg(shareText))
     }
   }
 
+  const handleDelegatedReferral = (e: React.MouseEvent | React.PointerEvent) => {
+    const el = (e.target as HTMLElement).closest('[data-referral-action]')
+    if (!el) return
+    const action = el.getAttribute('data-referral-action')
+    if (!action) return
+    const now = Date.now()
+    if (lastRefAction.current.name === action && now - lastRefAction.current.time < 500) return
+    lastRefAction.current = { name: action, time: now }
+    e.preventDefault()
+    e.stopPropagation()
+    if (action === 'copy') handleCopyLink()
+    else if (action === 'share') handleShare()
+  }
+
+  handlersRef.current = { copy: handleCopyLink, share: handleShare }
+
+  useEffect(() => {
+    const handleDocClick = (e: Event) => {
+      const target = (e.target as HTMLElement).closest('[data-referral-action]')
+      if (!target) return
+      const action = target.getAttribute('data-referral-action')
+      if (!action) return
+      e.preventDefault()
+      e.stopPropagation()
+      const now = Date.now()
+      if (lastRefAction.current.name === action && now - lastRefAction.current.time < 500) return
+      lastRefAction.current = { name: action, time: now }
+      const h = handlersRef.current
+      if (h && action === 'copy') h.copy()
+      else if (h && action === 'share') h.share()
+    }
+    document.addEventListener('click', handleDocClick, true)
+    document.addEventListener('pointerdown', handleDocClick, true)
+    return () => {
+      document.removeEventListener('click', handleDocClick, true)
+      document.removeEventListener('pointerdown', handleDocClick, true)
+    }
+  }, [])
+
   return (
-    <div className="card mb-6 bg-gradient-to-br from-indigo/20 to-purple/20 border-indigo/50">
+    <div
+      ref={containerRef}
+      className="card mb-6 bg-gradient-to-br from-indigo/20 to-purple/20 border-indigo/50 relative z-10"
+      onClick={handleDelegatedReferral}
+      onPointerDown={handleDelegatedReferral}
+      role="presentation"
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -93,21 +151,25 @@ export default function ReferralSystem() {
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 bg-secondary/50 rounded-lg p-3 border border-tertiary">
-            <div className="text-xs text-text-secondary mb-1">Your Referral Code</div>
+            <div className="text-xs text-text-secondary mb-1">{t('referral.yourCode', { defaultValue: 'Your Referral Code' })}</div>
             <div className="text-white font-mono font-semibold">{referralCode}</div>
           </div>
         </div>
 
         <div className="flex gap-2">
           <button
-            onClick={handleCopyLink}
-            className="flex-1 btn-primary text-sm py-2"
+            type="button"
+            data-referral-action="copy"
+            onClick={(e) => { e.stopPropagation(); handleCopyLink() }}
+            className="flex-1 btn-primary text-sm py-2 touch-manipulation min-h-[44px] referral-action-btn"
           >
             {t('referral.copy', { defaultValue: 'Copy Link' })}
           </button>
           <button
-            onClick={handleShare}
-            className="flex-1 btn-primary text-sm py-2"
+            type="button"
+            data-referral-action="share"
+            onClick={(e) => { e.stopPropagation(); handleShare() }}
+            className="flex-1 btn-primary text-sm py-2 touch-manipulation min-h-[44px] referral-action-btn"
           >
             {t('referral.share', { defaultValue: 'Share' })}
           </button>

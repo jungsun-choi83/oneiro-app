@@ -7,9 +7,9 @@ import LanguageSelector from '../components/LanguageSelector'
 const MOODS = ['scary', 'peaceful', 'confusing', 'vivid', 'recurring', 'lucid']
 
 export default function DreamInput() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { dreamText, mood, isRecurring, setDreamText, setMood, setIsRecurring } = useDreamStore()
+  const { dreamText, mood, isRecurring, setDreamText, setMood, setIsRecurring, setInterpretLanguage } = useDreamStore()
   
   const [selectedMoods, setSelectedMoods] = useState<string[]>(mood)
   const [text, setText] = useState(dreamText)
@@ -24,8 +24,10 @@ export default function DreamInput() {
   
   const handleSubmit = () => {
     if (text.length >= 20) {
+      const lang = (i18n.language || localStorage.getItem('oneiro_language') || 'en').split('-')[0]
       setDreamText(text)
-      navigate('/loading')
+      setInterpretLanguage(lang)
+      navigate('/loading', { state: { requestLanguage: lang } })
     }
   }
   

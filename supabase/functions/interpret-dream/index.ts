@@ -5,7 +5,7 @@ const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || ''
 
 serve(async (req) => {
   try {
-    const { dreamText, mood, isRecurring, telegramUserId } = await req.json()
+    const { dreamText, mood, isRecurring, telegramUserId, language } = await req.json()
 
     if (!dreamText || !telegramUserId) {
       return new Response(
@@ -14,6 +14,17 @@ serve(async (req) => {
       )
     }
 
+    const lang = language || 'en'
+    const langInstruction = lang === 'ko' 
+      ? 'Write ALL of your response (essence, hiddenMeaning, symbols name/meaning, deepInsight, psychologicalShadow, easternProphecy, spiritualAdvice, advice, spiritualMessage) in Korean (한국어).'
+      : lang === 'ja'
+      ? 'Write ALL of your response in Japanese (日本語).'
+      : lang === 'es'
+      ? 'Write ALL of your response in Spanish (Español).'
+      : lang === 'ar'
+      ? 'Write ALL of your response in Arabic (العربية).'
+      : 'Write in sophisticated English.'
+
     // Build system prompt
     let systemPrompt = `You are the world's foremost Spiritual Dream Analyst.
 You combine Carl Jung's Analytical Psychology, Oriental Oneiromancy (동양 해몽 with Five Elements and Fortune Theory),
@@ -21,7 +32,7 @@ and Western symbolism to interpret dreams.
 You don't just explain dreams — you decode the spiritual messages
 that the dreamer's unconscious mind is sending.
 Your tone is ethereal, elegant, warm, and caring.
-Write in sophisticated English.
+${langInstruction}
 
 Given the user's dream description, provide:
 1. essence: A one-line poetic summary of the dream's core meaning (max 15 words)

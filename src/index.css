@@ -20,7 +20,8 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-gradient-indigo text-white font-semibold py-3 px-6 rounded-lg 
+    @apply bg-gradient-indigo text-white font-semibold py-3 px-6 rounded-lg
+           min-h-[48px] touch-manipulation
            shadow-moonlight hover:shadow-moonlight-lg transition-all duration-300
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
@@ -34,5 +35,19 @@
     @apply bg-secondary border border-tertiary rounded-lg px-4 py-3 
            text-text-primary placeholder-text-secondary focus:outline-none 
            focus:border-indigo focus:ring-2 focus:ring-indigo/20;
+  }
+
+  /* 텔레그램 웹뷰에서 버튼 터치 시 반응 보이도록 */
+  .result-action-btn,
+  .referral-action-btn {
+    -webkit-tap-highlight-color: rgba(99, 102, 241, 0.4);
+    tap-highlight-color: rgba(99, 102, 241, 0.4);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  [data-result-action],
+  [data-referral-action] {
+    cursor: pointer;
+    pointer-events: auto;
   }
 }

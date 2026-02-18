@@ -41,8 +41,8 @@ serve(async (req) => {
                      product === 'dream_visualizer' ? 'Transform your dream into AI art' :
                      'Detailed 7-day spiritual guidance report',
         payload: JSON.stringify({ product, telegramUserId }),
-        provider_token: '', // Use Telegram Stars
-        currency: 'XTR', // Telegram Stars
+        // Telegram Stars(XTR): provider_token 생략 (디지털 상품은 빈 문자열도 넣으면 안 됨)
+        currency: 'XTR',
         prices: [{ label: product, amount: price }],
       }),
     })

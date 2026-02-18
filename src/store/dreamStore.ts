@@ -48,6 +48,8 @@ interface DreamState {
   artTitle: string | null
   dreamJournal: DreamJournalEntry[]
   userProfile: UserProfile | null
+  /** 언어 선택 후 해몽 요청 시점의 언어 (API/mock에서 사용) */
+  interpretLanguage: string
   setDreamText: (text: string) => void
   setMood: (mood: string[]) => void
   setIsRecurring: (isRecurring: boolean) => void
@@ -56,6 +58,7 @@ interface DreamState {
   setArtTitle: (title: string) => void
   addToJournal: (entry: DreamJournalEntry) => void
   setUserProfile: (profile: UserProfile) => void
+  setInterpretLanguage: (lang: string) => void
   resetDream: () => void
 }
 
@@ -70,6 +73,7 @@ export const useDreamStore = create<DreamState>()(
       artTitle: null,
       dreamJournal: [],
       userProfile: null,
+      interpretLanguage: 'en',
       setDreamText: (text) => set({ dreamText: text }),
       setMood: (mood) => set({ mood }),
       setIsRecurring: (isRecurring) => set({ isRecurring }),
@@ -81,6 +85,7 @@ export const useDreamStore = create<DreamState>()(
           dreamJournal: [entry, ...state.dreamJournal],
         })),
       setUserProfile: (profile) => set({ userProfile: profile }),
+      setInterpretLanguage: (lang) => set({ interpretLanguage: lang }),
       resetDream: () =>
         set({
           dreamText: '',
