@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
@@ -255,15 +254,6 @@ export default function Result({ fullReading = false }: ResultProps) {
     lastActionRef.current = { name: action, time: now }
     e.preventDefault()
     e.stopPropagation()
-    if (action === 'test') {
-      try {
-        if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
-        else alert('클릭됨!')
-      } catch {
-        alert('클릭됨!')
-      }
-      return
-    }
     if (action === 'visualize') handleVisualize()
     else if (action === 'report') handleReport()
     else if (action === 'share') handleShare()
@@ -303,15 +293,6 @@ export default function Result({ fullReading = false }: ResultProps) {
       lastActionRef.current = { name: action, time: now }
       const h = handlersRef.current
       if (!h) return
-      if (action === 'test') {
-        try {
-          if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
-          else alert('클릭됨!')
-        } catch {
-          alert('클릭됨!')
-        }
-        return
-      }
       if (action === 'visualize') h.visualize()
       else if (action === 'report') h.report()
       else if (action === 'share') h.share()
@@ -326,48 +307,8 @@ export default function Result({ fullReading = false }: ResultProps) {
     }
   }, [])
 
-  // 테스트 바: body에 포털로 렌더 → 레이아웃/캐시와 무관하게 항상 최상단에 표시
-  const testBar = (
-    <div
-      id="result-test-bar"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 2147483647,
-        padding: '12px 16px',
-        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-        borderBottom: '3px solid #b45309',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-        touchAction: 'manipulation',
-      }}
-    >
-      <button
-        type="button"
-        data-result-action="test"
-        className="result-action-btn w-full py-3 text-black font-bold rounded-lg border-0 cursor-pointer"
-        style={{ background: 'rgba(255,255,255,0.95)' }}
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          try {
-            if (window.Telegram?.WebApp?.showAlert) window.Telegram.WebApp.showAlert('클릭됨!')
-            else alert('클릭됨!')
-          } catch {
-            alert('클릭됨!')
-          }
-        }}
-      >
-        🔧 테스트: 여기 눌러보세요 (클릭되면 알림)
-      </button>
-    </div>
-  )
-
   return (
-    <>
-      {typeof document !== 'undefined' && createPortal(testBar, document.body)}
-      <div className="min-h-screen bg-gradient-midnight p-6" style={{ paddingTop: 72 }}>
+    <div className="min-h-screen bg-gradient-midnight p-6">
         <div
           ref={containerRef}
           className="max-w-2xl mx-auto"
@@ -565,6 +506,5 @@ export default function Result({ fullReading = false }: ResultProps) {
         </div>
       </div>
     </div>
-    </>
   )
 }
