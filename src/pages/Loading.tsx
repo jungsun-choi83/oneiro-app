@@ -199,7 +199,7 @@ export default function Loading() {
       if (!doneRef.current) {
         setError(t('error.timeout', { defaultValue: '요청 시간이 초과되었습니다. 다시 시도해 주세요.' }))
       }
-    }, 10000)
+    }, 60000)
 
     interpretDream()
 
