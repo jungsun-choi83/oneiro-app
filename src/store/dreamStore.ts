@@ -50,10 +50,13 @@ interface DreamState {
   userProfile: UserProfile | null
   /** 언어 선택 후 해몽 요청 시점의 언어 (API/mock에서 사용) */
   interpretLanguage: string
+  /** Supabase 미설정으로 mock 사용 시 true (Result에서 안내 배너용) */
+  usedMockData: boolean
   setDreamText: (text: string) => void
   setMood: (mood: string[]) => void
   setIsRecurring: (isRecurring: boolean) => void
   setDreamResult: (result: DreamResult) => void
+  setUsedMockData: (value: boolean) => void
   setDreamImage: (url: string) => void
   setArtTitle: (title: string) => void
   addToJournal: (entry: DreamJournalEntry) => void
@@ -74,10 +77,12 @@ export const useDreamStore = create<DreamState>()(
       dreamJournal: [],
       userProfile: null,
       interpretLanguage: 'en',
+      usedMockData: false,
       setDreamText: (text) => set({ dreamText: text }),
       setMood: (mood) => set({ mood }),
       setIsRecurring: (isRecurring) => set({ isRecurring }),
-      setDreamResult: (result) => set({ dreamResult: result }),
+      setDreamResult: (result) => set({ dreamResult: result, usedMockData: false }),
+      setUsedMockData: (value) => set({ usedMockData: value }),
       setDreamImage: (url) => set({ dreamImage: url }),
       setArtTitle: (title) => set({ artTitle: title }),
       addToJournal: (entry) =>

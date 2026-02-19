@@ -303,6 +303,8 @@ git push -u origin main
 6. **Environment Variables** 섹션에서 추가:
    - `VITE_SUPABASE_URL`: [Supabase Project URL]
    - `VITE_SUPABASE_ANON_KEY`: [Supabase anon key]
+   - (선택, Apps Center 등록 시) `VITE_TELEGRAM_ANALYTICS_TOKEN`: [Analytics 토큰]
+   - (선택, Apps Center 등록 시) `VITE_TELEGRAM_ANALYTICS_APP_NAME`: `oneiro`
 7. **Deploy** 클릭
 8. **2-3분 대기** → 배포 완료!
 9. 배포된 URL 복사: `https://oneiro-app.vercel.app` (이런 형식)
@@ -312,7 +314,19 @@ git push -u origin main
 - Vercel 대시보드 → 해당 프로젝트 → **Deployments**에서 최신 배포가 "Ready"인지 확인하세요.
 - 테스트할 때 **브라우저 캐시** 때문에 이전 버전이 보일 수 있습니다. **시크릿/프라이빗 창**에서 열거나, 모바일에서는 **앱을 완전히 닫았다가** 텔레그램에서 봇 메뉴로 다시 열어보세요.
 
-### 5-4. Telegram Mini App URL 설정
+### 5-4. Telegram Apps Center 등록용 Analytics (선택)
+
+**앱을 Telegram Apps Center에 등록**하려면 [Telegram Mini Apps Analytics](https://github.com/Telegram-Mini-Apps/analytics) SDK 연동이 필요합니다. 이 프로젝트에는 이미 SDK가 포함되어 있습니다.
+
+1. [TON Builders](https://builders.ton.org/) 에서 프로젝트 등록 후 **Analytics** 탭으로 이동합니다.
+2. 봇 URL·미니앱 도메인을 입력하고 **API 키(토큰)** 를 발급받습니다. (또는 [@DataChief_bot](https://t.me/DataChief_bot) 이용)
+3. Vercel **Environment Variables**에 추가:
+   - `VITE_TELEGRAM_ANALYTICS_TOKEN`: 발급받은 토큰
+   - `VITE_TELEGRAM_ANALYTICS_APP_NAME`: Analytics에 등록한 앱 식별자 (예: `oneiro`)
+4. 저장 후 **Redeploy** 한 번 실행하면, 앱 실행 시 자동으로 이벤트가 수집됩니다. (대부분 자동 수집, 별도 코드 추가 불필요)
+5. 자세한 내용: [docs.tganalytics.xyz](https://docs.tganalytics.xyz/)
+
+### 5-5. Telegram Mini App URL 설정
 
 1. BotFather와의 채팅으로 돌아가기
 2. `/setmenubutton` 입력
@@ -320,7 +334,7 @@ git push -u origin main
 4. 버튼 텍스트: `Start Dream Interpretation`
 5. URL: `https://oneiro-app.vercel.app` (Vercel에서 받은 URL)
 
-### 5-5. 텔레그램 스타(코인) 결제 — 연결 방법
+### 5-6. 텔레그램 스타(코인) 결제 — 연결 방법
 
 ONEIRO는 **텔레그램 스타(Telegram Stars)** 로 결제합니다. **BotFather에서 Portmone·Paycom 같은 결제사를 연결할 필요 없습니다.**
 
@@ -328,15 +342,30 @@ ONEIRO는 **텔레그램 스타(Telegram Stars)** 로 결제합니다. **BotFath
 - BotFather → Payments → "No payment methods connected" 가 나와도 **그대로 두시면 됩니다.** (저 버튼들은 **물리적 상품** 결제용입니다.)
 - 사용자는 스타를 **텔레그램 앱 내**에서 구매(Apple/Google 결제 또는 @PremiumBot)한 뒤, ONEIRO 앱에서 결제 버튼을 누르면 스타로 결제됩니다.
 
-**결제가 되려면 꼭 해야 할 것:**
+**⚠️ 결제가 안 될 때 확인 사항:**
 
-1. **봇 서버가 24시간 실행 중이어야 합니다.** (아래 6단계)  
+1. **BotFather에서 "No payment methods connected"가 나오는 것은 정상입니다!**
+   - Stars 결제는 별도의 payment provider 연결이 필요 없습니다.
+   - 이 메시지는 물리적 상품(배송이 필요한 상품) 결제용입니다.
+   - ONEIRO는 디지털 상품이므로 이 설정을 무시하셔도 됩니다.
+
+2. **봇 서버가 24시간 실행 중이어야 합니다.** (아래 6단계)  
    - 사용자가 결제 버튼을 누르면 텔레그램이 봇에게 "결제 허용할까요?"(pre_checkout_query)를 보냅니다.  
    - **봇 서버**가 이걸 10초 안에 "허용"으로 응답해야 결제가 완료됩니다.  
    - 봇을 로컬에서만 켜 두거나, 서버를 안 올리면 결제 시도가 실패합니다.
-2. **Supabase `create-invoice` 함수**가 배포되어 있고, **Edge Function 시크릿**에 `TELEGRAM_BOT_TOKEN` 이 들어 있어야 합니다. (3단계에서 설정한 그 토큰)
+   - **봇 서버가 실행 중인지 확인:** Railway/Render 대시보드에서 봇 서버가 "Running" 상태인지 확인하세요.
 
-정리: **BotFather에서는 결제사 연결 안 해도 되고**, **봇 서버만 6단계처럼 Railway/Render 등에 배포해 두면** 스타 결제가 동작합니다.
+3. **Supabase `create-invoice` 함수**가 배포되어 있고, **Edge Function 시크릿**에 `TELEGRAM_BOT_TOKEN` 이 들어 있어야 합니다. (3단계에서 설정한 그 토큰)
+   - Supabase 대시보드 → Edge Functions → `create-invoice` → Settings → Secrets에서 확인하세요.
+
+4. **텔레그램 앱 버전 확인:**
+   - "PAYMENT_UNSUPPORTED" 에러가 나면 텔레그램 앱을 최신 버전으로 업데이트하세요.
+   - "Invalid transaction details" 에러가 나면 봇 서버가 실행 중인지 확인하세요.
+
+**정리:** 
+- ✅ BotFather에서 결제사 연결 안 해도 됩니다 (Stars는 자동 지원)
+- ✅ 봇 서버만 6단계처럼 Railway/Render 등에 배포해 두면 스타 결제가 동작합니다
+- ✅ "No payment methods connected"는 무시하셔도 됩니다
 
 ---
 
@@ -449,6 +478,31 @@ ONEIRO는 **텔레그램 스타(Telegram Stars)** 로 결제합니다. **BotFath
 
 ### 문제: 봇이 응답하지 않음
 - **해결**: 봇 서버가 실행 중인지 확인 (Railway/Render 대시보드 확인)
+
+### 문제: Supabase Edge Function `interpret-dream` 호출 수가 0으로 나옴
+
+**원인:** `interpret-dream`은 **꿈을 입력하고 제출한 뒤 Loading 페이지를 거칠 때만** 호출됩니다.
+
+- `/result` 또는 `/result?preview=1` **만** 열면 호출되지 않습니다.
+- **홈 → 꿈 입력 → 제출 → Loading(로딩 화면)** 순서로 진행해야 호출됩니다.
+
+**확인 순서:**
+
+1. **테스트 방법**
+   - 배포된 앱 URL에서 **홈(또는 /dream)** 으로 이동
+   - 꿈 내용 입력 후 **제출** 클릭
+   - **Loading(달 애니메이션)** 화면이 나오는 동안 `interpret-dream`이 호출됨
+   - 이 흐름을 한 번 진행한 뒤 Supabase **Edge Functions → interpret-dream → Overview** 에서 통계 확인 (최대 24시간 지연될 수 있음)
+
+2. **Vercel 환경 변수**
+   - Vercel 대시보드 → 프로젝트 → **Settings → Environment Variables**
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` 가 설정되어 있는지 확인
+   - 없으면 브라우저에서 mock 데이터만 쓰고 API를 호출하지 않음
+
+3. **브라우저 개발자 도구**
+   - F12 → **Network** 탭
+   - 위 1번 흐름(꿈 제출 → Loading)을 다시 진행
+   - 목록에서 `interpret-dream` 요청이 있는지, 상태 코드가 200인지 확인
 
 ---
 

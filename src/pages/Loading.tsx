@@ -13,11 +13,22 @@ export default function Loading() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { dreamText, mood, isRecurring, setDreamResult, interpretLanguage } = useDreamStore()
+  const { dreamText, mood, isRecurring, setDreamResult, setUsedMockData, interpretLanguage } = useDreamStore()
   const requestLangFromNav = (location.state as { requestLanguage?: string })?.requestLanguage
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<{
+    apiCalling: boolean
+    apiSuccess: boolean | null
+    usingMock: boolean
+    supabaseConfigured: boolean
+  }>({
+    apiCalling: false,
+    apiSuccess: null,
+    usingMock: false,
+    supabaseConfigured: false,
+  })
   const [moonPhase, setMoonPhase] = useState(0)
   const doneRef = useRef(false)
 
@@ -58,10 +69,60 @@ export default function Loading() {
     doneRef.current = false
     const interpretDream = async () => {
       const requestLang = requestLangFromNav ?? (interpretLanguage || i18n.language || 'en').split('-')[0]
+      
+      // 즉시 로그 출력 (가장 먼저)
+      if (typeof window !== 'undefined') {
+        console.log('🚀 [ONEIRO] ========== 꿈 해석 시작 ==========')
+        console.log('📝 [ONEIRO] 꿈 텍스트:', dreamText?.substring(0, 100))
+        console.log('🔍 [ONEIRO] 환경 변수 체크 시작...')
+      }
+      
       try {
-        // Check if Supabase is configured
-        if (!supabase || !import.meta.env.VITE_SUPABASE_URL) {
-          // Use mock data for development
+        // Supabase 환경 변수 확인 (없으면 fallback 사용)
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qjcjrnogkhaiewoqjrns.supabase.co'
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqY2pybm9na2hhaWV3b3Fqcm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTYxOTQsImV4cCI6MjA4NjkzMjE5NH0.A9ZdwitLc1UgdAcdHbM-Rpg53XEWD2BWPwP1VjEhYwY'
+        
+        // 즉시 환경 변수 상태 출력
+        if (typeof window !== 'undefined') {
+          console.log('🔍 [ONEIRO] 환경 변수 상태:', {
+            VITE_SUPABASE_URL: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : '❌ 없음',
+            VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : '❌ 없음',
+            '전체 URL': supabaseUrl || '없음',
+            '전체 Key': supabaseAnonKey ? '있음 (길이: ' + supabaseAnonKey.length + ')' : '없음'
+          })
+        }
+        
+        // supabase 객체가 없어도 URL과 Key가 있으면 새로 생성
+        let supabaseClient = supabase
+        if ((!supabaseClient || !supabaseClient.functions) && supabaseUrl && supabaseAnonKey) {
+          const { createClient } = await import('@supabase/supabase-js')
+          supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+          if (typeof window !== 'undefined') {
+            console.log('✅ [ONEIRO] Supabase 클라이언트 생성됨:', {
+              url: supabaseUrl.substring(0, 30) + '...',
+              hasFunctions: !!supabaseClient.functions
+            })
+          }
+        }
+        
+        // 환경 변수 확인 (더 엄격하게)
+        const hasValidConfig = supabaseClient && supabaseClient.functions && supabaseUrl && supabaseAnonKey
+        
+        if (!hasValidConfig) {
+          if (typeof window !== 'undefined') {
+            console.error('❌ [ONEIRO] ========== Supabase 환경 변수 미설정 ==========')
+            console.error('❌ [ONEIRO] Supabase 환경 변수 미설정:', {
+              hasSupabase: !!supabaseClient,
+              hasUrl: !!supabaseUrl,
+              hasAnonKey: !!supabaseAnonKey,
+              envUrl: import.meta.env.VITE_SUPABASE_URL ? '있음' : '없음',
+              envKey: import.meta.env.VITE_SUPABASE_ANON_KEY ? '있음' : '없음',
+              message: 'Vercel에 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY를 설정하고 재배포하세요. 지금은 mock 데이터를 사용합니다.'
+            })
+            console.error('❌ [ONEIRO] Mock 데이터 사용 - 같은 해석이 나옵니다!')
+            console.error('❌ [ONEIRO] ==========================================')
+          }
+          // Supabase 미설정 시 mock 사용
           await new Promise(resolve => setTimeout(resolve, 3000)) // Simulate API delay
           const devIsKo = requestLang === 'ko'
           const mockResult = devIsKo ? {
@@ -101,89 +162,146 @@ export default function Loading() {
           }
           
           setDreamResult(mockResult)
+          setUsedMockData(true)
           setProgress(100)
           doneRef.current = true
-          setTimeout(() => navigate('/result'), 500)
+          setTimeout(() => navigate(getTelegramUserId() ? '/result' : '/result?preview=1'), 500)
           return
         }
 
         const telegramUserId = getTelegramUserId()
-
-        // Telegram에서 열지 않았을 때(브라우저 직접 접속 등): mock 데이터로 결과 표시
-        if (!telegramUserId) {
-          await new Promise(resolve => setTimeout(resolve, 3000))
-          const isKo = requestLang === 'ko'
-          const mockResult = isKo ? {
-            essence: "당신의 꿈은 표현을 갈구하는 숨겨진 감정을 드러냅니다.",
-            hiddenMeaning: "당신의 무의식이 숨기고 있는 거대한 신호가 발견되었습니다. 이 꿈은 단순한 기억이 아니라 당신의 운명을 바꿀 바다의 변혁적 힘을 품고 있습니다.",
-            symbols: [
-              { emoji: "🌊", name: "바다", meaning: "깊은 감정과 무의식" },
-              { emoji: "🦋", name: "나비", meaning: "변화와 변형" },
-              { emoji: "🌙", name: "달", meaning: "직관과 여성적 에너지" }
-            ],
-            deepInsight: "당신의 꿈은 무의식의 세계로 열리는 창입니다. 꿈속 상징들은 인정을 갈구하는 내면의 측면을 나타냅니다. 바다는 감정의 깊이를, 나비는 변형의 시기를, 달은 직관이 이 변화를 이끌고 있음을 말해줍니다.",
-            psychologicalShadow: "융의 관점에서, 꿈속 바다는 억압된 감정과 원형이 머무는 무의식의 영역을 상징합니다. 나비의 변형은 그림자가 통합될 준비가 되었음을 보여주며, 의식과 무의식의 균형을 향한 개성화의 순간입니다.",
-            easternProphecy: "동양 해몽에서 물(海)은 지혜와 감정의 흐름을 나타냅니다. 꿈속 물과 나비(蝴蝶), 달(月)의 조합은 3~6개월 내 감정·재물·직관 측면에서 유리한 변화를 암시합니다.",
-            spiritualAdvice: "물가에서 명상하거나 고요한 바다를 상상해 보세요. 나비는 끝이 아닌 시작을, 달은 보름달·그믐달에 직관에 귀 기울이라 전합니다. 30일간 꿈 일기를 써 보세요.",
-            advice: [
-              "오늘 하루 자기 성찰 시간을 가지세요",
-              "결정할 때 직관을 믿으세요",
-              "창작 활동으로 감정을 표현해 보세요"
-            ],
-            emotionalTone: "명상적",
-            spiritualMessage: "영혼이 이 상징들을 통해 말하고 있습니다. 전해지는 메시지를 믿고 성장을 받아들이세요."
-          } : {
-            essence: "Your dream reveals hidden emotions seeking expression.",
-            hiddenMeaning: "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries the transformative power of the ocean that could change your destiny.",
-            symbols: [
-              { emoji: "🌊", name: "Ocean", meaning: "Deep emotions and the unconscious" },
-              { emoji: "🦋", name: "Butterfly", meaning: "Transformation and change" },
-              { emoji: "🌙", name: "Moon", meaning: "Intuition and feminine energy" }
-            ],
-            deepInsight: "Your dream is a window into your subconscious mind. The symbols you encountered represent aspects of your inner world that are seeking recognition. The ocean symbolizes the depth of your emotions, while the butterfly suggests you are in a period of transformation. The moon's presence indicates that your intuition is guiding you through this phase of change. Pay attention to the feelings these symbols evoke, as they hold keys to understanding your current life situation.",
-            psychologicalShadow: "From a Jungian perspective, the ocean in your dream represents the vast unconscious realm where repressed emotions and archetypal patterns reside. The depth suggests you are being called to explore aspects of yourself that have been submerged. The butterfly transformation indicates your shadow is ready to integrate, moving from one state of being to another. This is a powerful moment of individuation where your conscious and unconscious minds are seeking balance.",
-            easternProphecy: "In Eastern divination, water (海) represents wisdom and emotional flow. The appearance of water in your dream during this period suggests favorable changes in your emotional and financial realms. The butterfly (蝴蝶) is an auspicious symbol indicating transformation and new beginnings. Combined with the moon (月), which represents yin energy and intuition, this dream suggests a period of 3-6 months where your inner wisdom will guide you toward significant life changes. The timing is propitious for making important decisions.",
-            spiritualAdvice: "Your dream is a spiritual call to embrace your emotional depth. Practice daily meditation near water if possible, or visualize yourself floating in a calm ocean. The butterfly teaches you to trust the process of transformation—what feels like endings are actually beginnings. Keep a dream journal for the next 30 days to track patterns. The moon's energy suggests you should pay attention to your intuition, especially during the new and full moon phases. Create a small altar with symbols of water and transformation to honor this spiritual message.",
-            advice: [
-              "Take time for self-reflection today",
-              "Trust your intuition when making decisions",
-              "Express your emotions through creative activities"
-            ],
-            emotionalTone: "contemplative",
-            spiritualMessage: "Your soul is communicating through these symbols. Trust the messages you receive and allow yourself to grow through this understanding."
+        // 브라우저 직접 접속 등 Telegram 미연동 시 guest(-1)로 실제 API 호출 → 꿈마다 다른 해석
+        const effectiveUserId = telegramUserId ?? -1
+        
+        // Supabase가 설정되어 있으면 실제 API 호출 시도
+        if (hasValidConfig) {
+          setDebugInfo(prev => ({ ...prev, apiCalling: true, supabaseConfigured: true }))
+          if (typeof window !== 'undefined') {
+            console.log('✅ [ONEIRO] ========== 실제 API 호출 시작 ==========')
+            console.log('✅ [ONEIRO] 실제 API 호출 시도 (꿈마다 다른 해석이 나옵니다)', {
+              dreamText: dreamText?.substring(0, 50),
+              telegramUserId: effectiveUserId,
+              supabaseUrl: supabaseUrl?.substring(0, 30) + '...',
+              hasAnonKey: !!supabaseAnonKey
+            })
           }
-          setDreamResult(mockResult)
-          setProgress(100)
-          doneRef.current = true
-          setTimeout(() => navigate('/result'), 500)
-          return
-        }
 
-        const { data, error: apiError } = await supabase.functions.invoke('interpret-dream', {
-          body: {
-            dreamText,
-            mood,
-            isRecurring,
-            telegramUserId,
-            language: requestLang,
-          },
-        })
+          try {
+            const { data, error: apiError } = await supabaseClient.functions.invoke('interpret-dream', {
+              body: {
+                dreamText,
+                mood,
+                isRecurring,
+                telegramUserId: effectiveUserId,
+                language: requestLang,
+              },
+            })
 
-        if (apiError) {
-          const msg = (apiError as { context?: { body?: { error?: string } } })?.context?.body?.error
-            || (apiError as Error).message
-          throw new Error(msg || 'Interpretation failed. Please try again.')
-        }
-        if (data?.error) {
-          throw new Error(typeof data.error === 'string' ? data.error : 'Interpretation failed. Please try again.')
-        }
+            if (apiError) {
+              if (typeof window !== 'undefined') {
+                console.error('❌ [ONEIRO] interpret-dream API error:', {
+                  error: apiError,
+                  message: (apiError as Error).message,
+                  context: (apiError as { context?: any })?.context
+                })
+              }
+              const msg = (apiError as { context?: { body?: { error?: string } } })?.context?.body?.error
+                || (apiError as Error).message
+              throw new Error(msg || 'Interpretation failed. Please try again.')
+            }
+            if (data?.error) {
+              if (typeof window !== 'undefined') {
+                console.error('❌ [ONEIRO] interpret-dream data.error:', data.error)
+              }
+              throw new Error(typeof data.error === 'string' ? data.error : 'Interpretation failed. Please try again.')
+            }
 
-        setDreamResult(data)
+            if (typeof window !== 'undefined') {
+              console.log('✅ [ONEIRO] ========== API 호출 성공! ==========')
+              console.log('✅ [ONEIRO] interpret-dream API 성공! 꿈마다 다른 해석이 나옵니다.', {
+                essence: data?.essence?.substring(0, 50),
+                symbols: data?.symbols?.map(s => s.name),
+                hiddenMeaning: data?.hiddenMeaning?.substring(0, 50)
+              })
+              console.log('✅ [ONEIRO] ==========================================')
+            }
+            setDebugInfo(prev => ({ ...prev, apiCalling: false, apiSuccess: true, usingMock: false }))
+            setDreamResult(data)
+            setProgress(100)
+            doneRef.current = true
+            setTimeout(() => {
+              navigate(getTelegramUserId() ? '/result' : '/result?preview=1')
+            }, 500)
+            return
+          } catch (apiErr) {
+            // API 호출 실패 시 mock으로 폴백
+            setDebugInfo(prev => ({ ...prev, apiCalling: false, apiSuccess: false, usingMock: true }))
+            if (typeof window !== 'undefined') {
+              console.error('⚠️ [ONEIRO] ========== API 호출 실패 ==========')
+              console.error('⚠️ [ONEIRO] API 호출 실패, mock 데이터 사용:', {
+                error: apiErr,
+                message: apiErr instanceof Error ? apiErr.message : String(apiErr),
+                stack: apiErr instanceof Error ? apiErr.stack : undefined
+              })
+              console.error('⚠️ [ONEIRO] Mock 데이터 사용 - 같은 해석이 나옵니다!')
+              console.error('⚠️ [ONEIRO] ==========================================')
+            }
+            // 아래 mock 코드로 계속 진행
+          }
+        } else {
+          // Supabase 미설정 시 mock 사용
+          setDebugInfo(prev => ({ ...prev, supabaseConfigured: false, usingMock: true }))
+        }
+        
+        // Mock 데이터 사용 (Supabase 미설정 또는 API 실패 시)
+        if (typeof window !== 'undefined') {
+          console.log('📝 [ONEIRO] ========== Mock 데이터 사용 ==========')
+          console.log('📝 [ONEIRO] Mock 데이터 사용 (항상 같은 해석)')
+          console.log('📝 [ONEIRO] 이 메시지가 보이면 환경 변수가 설정되지 않았거나 API 호출이 실패한 것입니다.')
+          console.log('📝 [ONEIRO] ==========================================')
+        }
+        const devIsKo = requestLang === 'ko'
+        const mockResult = devIsKo ? {
+          essence: "당신의 꿈은 표현을 갈구하는 숨겨진 감정을 드러냅니다.",
+          hiddenMeaning: "당신의 무의식이 숨기고 있는 거대한 신호가 발견되었습니다. 이 꿈은 단순한 기억이 아니라 당신의 운명을 바꿀 바다의 변혁적 힘을 품고 있습니다.",
+          symbols: [
+            { emoji: "🌊", name: "바다", meaning: "깊은 감정과 무의식" },
+            { emoji: "🦋", name: "나비", meaning: "변화와 변형" },
+            { emoji: "🌙", name: "달", meaning: "직관과 여성적 에너지" }
+          ],
+          deepInsight: "당신의 꿈은 무의식의 세계로 열리는 창입니다. 꿈속 상징들은 인정을 갈구하는 내면의 측면을 나타냅니다.",
+          psychologicalShadow: "융의 관점에서, 꿈속 바다는 억압된 감정과 원형이 머무는 무의식의 영역을 상징합니다.",
+          easternProphecy: "동양 해몽에서 물(海)은 지혜와 감정의 흐름을 나타냅니다.",
+          spiritualAdvice: "물가에서 명상하거나 고요한 바다를 상상해 보세요. 30일간 꿈 일기를 써 보세요.",
+          advice: ["오늘 하루 자기 성찰 시간을 가지세요", "결정할 때 직관을 믿으세요", "창작 활동으로 감정을 표현해 보세요"],
+          emotionalTone: "명상적",
+          spiritualMessage: "영혼이 이 상징들을 통해 말하고 있습니다. 전해지는 메시지를 믿고 성장을 받아들이세요."
+        } : {
+          essence: "Your dream reveals hidden emotions seeking expression.",
+          hiddenMeaning: "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries the transformative power of the ocean that could change your destiny.",
+          symbols: [
+            { emoji: "🌊", name: "Ocean", meaning: "Deep emotions and the unconscious" },
+            { emoji: "🦋", name: "Butterfly", meaning: "Transformation and change" },
+            { emoji: "🌙", name: "Moon", meaning: "Intuition and feminine energy" }
+          ],
+          deepInsight: "Your dream is a window into your subconscious mind. The symbols you encountered represent aspects of your inner world that are seeking recognition. The ocean symbolizes the depth of your emotions, while the butterfly suggests you are in a period of transformation. The moon's presence indicates that your intuition is guiding you through this phase of change. Pay attention to the feelings these symbols evoke, as they hold keys to understanding your current life situation.",
+          psychologicalShadow: "From a Jungian perspective, the ocean in your dream represents the vast unconscious realm where repressed emotions and archetypal patterns reside. The depth suggests you are being called to explore aspects of yourself that have been submerged. The butterfly transformation indicates your shadow is ready to integrate, moving from one state of being to another. This is a powerful moment of individuation where your conscious and unconscious minds are seeking balance.",
+          easternProphecy: "In Eastern divination, water (海) represents wisdom and emotional flow. The appearance of water in your dream during this period suggests favorable changes in your emotional and financial realms. The butterfly (蝴蝶) is an auspicious symbol indicating transformation and new beginnings. Combined with the moon (月), which represents yin energy and intuition, this dream suggests a period of 3-6 months where your inner wisdom will guide you toward significant life changes. The timing is propitious for making important decisions.",
+          spiritualAdvice: "Your dream is a spiritual call to embrace your emotional depth. Practice daily meditation near water if possible, or visualize yourself floating in a calm ocean. The butterfly teaches you to trust the process of transformation—what feels like endings are actually beginnings. Keep a dream journal for the next 30 days to track patterns. The moon's energy suggests you should pay attention to your intuition, especially during the new and full moon phases. Create a small altar with symbols of water and transformation to honor this spiritual message.",
+          advice: [
+            "Take time for self-reflection today",
+            "Trust your intuition when making decisions",
+            "Express your emotions through creative activities"
+          ],
+          emotionalTone: "contemplative",
+          spiritualMessage: "Your soul is communicating through these symbols. Trust the messages you receive and allow yourself to grow through this understanding."
+        }
+        
+        setDreamResult(mockResult)
+        setUsedMockData(true)
         setProgress(100)
         doneRef.current = true
-        setTimeout(() => {
-          navigate('/result')
-        }, 500)
+        setTimeout(() => navigate(getTelegramUserId() ? '/result' : '/result?preview=1'), 500)
       } catch (err) {
         console.error('Error interpreting dream:', err)
         doneRef.current = true
@@ -257,6 +375,24 @@ export default function Loading() {
             </button>
           </div>
         )}
+
+        {/* 디버그 정보 */}
+        <div className="mt-8 p-4 bg-black/30 rounded-lg border border-amber-400/30">
+          <p className="text-amber-200 font-semibold text-sm mb-2">🔍 디버그 정보:</p>
+          <div className="text-amber-200/90 text-xs font-mono space-y-1 text-left">
+            <div>• API 호출 중: {debugInfo.apiCalling ? '⏳ 예' : '❌ 아니오'}</div>
+            <div>• API 성공: {debugInfo.apiSuccess === null ? '⏳ 대기 중' : debugInfo.apiSuccess ? '✅ 예' : '❌ 아니오'}</div>
+            <div>• Mock 데이터 사용: {debugInfo.usingMock ? '❌ 예 (같은 해석)' : '✅ 아니오 (다른 해석)'}</div>
+            <div>• Supabase 설정: {debugInfo.supabaseConfigured ? '✅ 예' : '❌ 아니오'}</div>
+            <div>• Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ 있음' : '❌ 없음'}</div>
+            <div>• Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ 있음' : '❌ 없음'}</div>
+          </div>
+          {debugInfo.usingMock && (
+            <p className="text-red-300 text-xs mt-2 font-semibold">
+              ⚠️ Mock 데이터를 사용 중입니다. Vercel에 환경 변수를 설정하고 재배포하세요!
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )

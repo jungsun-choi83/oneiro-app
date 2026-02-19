@@ -29,14 +29,30 @@ serve(async (req) => {
     const language = body.language
     const telegramUserId = body.telegramUserId != null ? Number(body.telegramUserId) : NaN
 
+    // 로그: 요청 정보 확인
+    console.log('[interpret-dream] Request:', {
+      dreamTextLength: dreamText?.length,
+      telegramUserId,
+      language,
+      mood,
+      isRecurring
+    })
+
     if (!dreamText?.trim()) {
       return new Response(
         JSON.stringify({ error: 'Missing dream text' }),
         { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       )
     }
+    // guest ID(-1) 허용: 브라우저에서 테스트할 때 사용
     if (Number.isNaN(telegramUserId) || telegramUserId === 0) {
+      console.log('[interpret-dream] Invalid telegramUserId:', telegramUserId)
       return errRes('Telegram user ID required. Open the app from Telegram.', 400)
+    }
+    
+    // guest ID(-1)인 경우 로그
+    if (telegramUserId === -1) {
+      console.log('[interpret-dream] Guest user detected (browser test mode)')
     }
 
     if (!OPENAI_API_KEY) {

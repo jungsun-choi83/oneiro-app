@@ -12,11 +12,17 @@ export default function Visualize() {
   const { dreamText, dreamResult, dreamImage, artTitle, setDreamImage, setArtTitle } = useDreamStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState(false)
 
   useEffect(() => {
     const generateImage = async () => {
       if (dreamImage) {
         setLoading(false)
+        return
+      }
+      if (typeof window !== 'undefined' && window.location.search.includes('preview=1')) {
+        setLoading(false)
+        setPreviewMode(true)
         return
       }
 
@@ -49,6 +55,8 @@ export default function Visualize() {
 
     generateImage()
   }, [dreamText, dreamResult, dreamImage, setDreamImage, setArtTitle])
+
+  const showPreviewPlaceholder = previewMode && !dreamImage
 
   const handleSave = () => {
     if (dreamImage) {
@@ -94,6 +102,34 @@ export default function Visualize() {
               {t('visualize.retry')}
             </button>
           </div>
+        ) : showPreviewPlaceholder ? (
+          <>
+            <div className="card mb-6">
+              <div className="relative aspect-square w-full rounded-lg border-4 border-dashed border-indigo/50 bg-indigo/10 flex items-center justify-center min-h-[280px]">
+                <p className="text-text-secondary text-center px-4">
+                  테스트 화면입니다.<br />결제 시 DALL·E로 생성된 꿈 이미지가 여기에 표시됩니다.
+                </p>
+              </div>
+            </div>
+            {dreamResult && (
+              <div className="card mb-6">
+                <div className="flex flex-wrap gap-3">
+                  {dreamResult.symbols.map((symbol, idx) => (
+                    <div
+                      key={idx}
+                      className="px-4 py-2 bg-indigo/20 border border-indigo/30 rounded-lg"
+                    >
+                      <span className="text-lg mr-2">{symbol.emoji}</span>
+                      <span className="text-white font-medium">{symbol.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button onClick={() => navigate('/result?preview=1')} className="btn-primary w-full">
+              결과로 돌아가기
+            </button>
+          </>
         ) : dreamImage ? (
           <>
             <div className="card mb-6">

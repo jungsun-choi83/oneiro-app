@@ -1,30 +1,58 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
+import { getTelegramUserId } from '../lib/telegram'
 import LanguageSelector from '../components/LanguageSelector'
 
 export default function Report() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { dreamResult } = useDreamStore()
   const [report, setReport] = useState<string>('')
+  
+  const isPreviewMode = searchParams.get('preview') === '1'
+  const hasPreviewInUrl = typeof window !== 'undefined' && window.location.search.includes('preview=1')
+  const isBrowser = typeof window !== 'undefined' && !getTelegramUserId()
+  const showPreview = isPreviewMode || hasPreviewInUrl || isBrowser
+
+  // 미리보기 모드에서 dreamResult가 없으면 mock 데이터 사용
+  const previewMockResult = showPreview && !dreamResult ? {
+    essence: "당신의 꿈은 표현을 갈구하는 숨겨진 감정을 드러냅니다.",
+    hiddenMeaning: "당신의 무의식이 숨기고 있는 거대한 신호가 발견되었습니다. 이 꿈은 단순한 기억이 아니라 당신의 운명을 바꿀 바다의 변혁적 힘을 품고 있습니다.",
+    symbols: [
+      { emoji: "🌊", name: "바다", meaning: "깊은 감정과 무의식" },
+      { emoji: "🦋", name: "나비", meaning: "변화와 변형" },
+      { emoji: "🌙", name: "달", meaning: "직관과 여성적 에너지" }
+    ],
+    deepInsight: "당신의 꿈은 무의식의 세계로 열리는 창입니다. 꿈속 상징들은 인정을 갈구하는 내면의 측면을 나타냅니다. 바다는 감정의 깊이를, 나비는 변형의 시기를, 달은 직관이 이 변화를 이끌고 있음을 말해줍니다.",
+    psychologicalShadow: "융의 관점에서, 꿈속 바다는 억압된 감정과 원형이 머무는 무의식의 영역을 상징합니다.",
+    easternProphecy: "동양 해몽에서 물(海)은 지혜와 감정의 흐름을 나타냅니다.",
+    spiritualAdvice: "물가에서 명상하거나 고요한 바다를 상상해 보세요. 30일간 꿈 일기를 써 보세요.",
+    advice: ["오늘 하루 자기 성찰 시간을 가지세요", "결정할 때 직관을 믿으세요", "창작 활동으로 감정을 표현해 보세요"],
+    emotionalTone: "명상적",
+    spiritualMessage: "영혼이 이 상징들을 통해 말하고 있습니다. 전해지는 메시지를 믿고 성장을 받아들이세요."
+  } : null
+
+  const displayResult = dreamResult || previewMockResult
 
   useEffect(() => {
-    if (!dreamResult) {
+    if (!displayResult && !showPreview) {
       navigate('/result')
       return
     }
 
     // Generate comprehensive report
     const generateReport = () => {
+      if (!displayResult) return
       const reportSections = [
         `# Soul Message Report\n\n`,
-        `## Dream Essence\n${dreamResult.essence}\n\n`,
-        `## Detailed Analysis\n${dreamResult.deepInsight}\n\n`,
-        `## Key Symbols\n${dreamResult.symbols.map(s => `- ${s.emoji} **${s.name}**: ${s.meaning}`).join('\n')}\n\n`,
-        `## Actionable Guidance\n${dreamResult.advice.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\n`,
-        `## Spiritual Message\n${dreamResult.spiritualMessage}\n\n`,
+        `## Dream Essence\n${displayResult.essence}\n\n`,
+        `## Detailed Analysis\n${displayResult.deepInsight}\n\n`,
+        `## Key Symbols\n${displayResult.symbols.map(s => `- ${s.emoji} **${s.name}**: ${s.meaning}`).join('\n')}\n\n`,
+        `## Actionable Guidance\n${displayResult.advice.map((a, i) => `${i + 1}. ${a}`).join('\n')}\n\n`,
+        `## Spiritual Message\n${displayResult.spiritualMessage}\n\n`,
         `## 7-Day Guidance\n\n`,
         `### Day 1-2: Reflection\nTake time to reflect on the symbols and messages from your dream. Journal about any emotions or memories it triggered.\n\n`,
         `### Day 3-4: Integration\nBegin to integrate the insights into your daily life. Pay attention to synchronicities and signs.\n\n`,
@@ -36,7 +64,7 @@ export default function Report() {
     }
 
     generateReport()
-  }, [dreamResult, navigate])
+  }, [displayResult, navigate, showPreview])
 
   const handleDownload = () => {
     const blob = new Blob([report], { type: 'text/markdown' })
@@ -51,7 +79,7 @@ export default function Report() {
   const handleShare = () => {
     try {
       if (window.Telegram?.WebApp?.openLink) {
-        const shareText = `My Soul Message Report from ONEIRO 🌙\n\n${dreamResult?.essence}`
+        const shareText = `My Soul Message Report from ONEIRO 🌙\n\n${displayResult?.essence || 'Preview mode'}`
         window.Telegram.WebApp.openLink(
           `https://t.me/share/url?url=${encodeURIComponent(shareText)}`
         )
@@ -61,7 +89,7 @@ export default function Report() {
     }
   }
 
-  if (!dreamResult) return null
+  if (!displayResult) return null
 
   return (
     <div className="min-h-screen bg-gradient-midnight p-6">
