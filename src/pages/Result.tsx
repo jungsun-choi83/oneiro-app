@@ -849,6 +849,7 @@ export default function Result({ fullReading = false }: ResultProps) {
         <div className="text-center text-text-secondary text-sm">
           {t('result.crossPromo')}
         </div>
+        </div>
           </>
         )}
 

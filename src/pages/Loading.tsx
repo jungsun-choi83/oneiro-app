@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useDreamStore } from '../store/dreamStore'
-import { supabase } from '../lib/supabase'
 import { getTelegramUserId } from '../lib/telegram'
 import LanguageSelector from '../components/LanguageSelector'
 import i18n from '../i18n/config'
@@ -80,7 +79,7 @@ export default function Loading() {
       try {
         // Supabase 환경 변수 확인 (없으면 fallback 사용)
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qjcjrnogkhaiewoqjrns.supabase.co'
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqY2pybm9na2hhaWV3b3Fqcm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTYxOTQsImV4cCI6MjA4NjkzMjE5NH0.A9ZdwitLc1UgdAcdHbM-Rpg53XEWD2BWPwP1VjEhYwY'
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqY2pybm9na2hhaWV3b3Fqcm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNTYxOTQsImV4cCI6MjA4NjkzMjE5NH0.A9ZdwitLc1UgdAcdHbM-Rpg53XEWD2BWPwP1VjEhYwY'
         
         // 즉시 환경 변수 상태 출력
         if (typeof window !== 'undefined') {
@@ -92,27 +91,13 @@ export default function Loading() {
           })
         }
         
-        // supabase 객체가 없어도 URL과 Key가 있으면 새로 생성
-        let supabaseClient = supabase
-        if ((!supabaseClient || !supabaseClient.functions) && supabaseUrl && supabaseAnonKey) {
-          const { createClient } = await import('@supabase/supabase-js')
-          supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
-          if (typeof window !== 'undefined') {
-            console.log('✅ [ONEIRO] Supabase 클라이언트 생성됨:', {
-              url: supabaseUrl.substring(0, 30) + '...',
-              hasFunctions: !!supabaseClient.functions
-            })
-          }
-        }
-        
-        // 환경 변수 확인 (더 엄격하게)
-        const hasValidConfig = supabaseClient && supabaseClient.functions && supabaseUrl && supabaseAnonKey
+        // fetch로 직접 호출하므로 URL과 Key만 있으면 됨
+        const hasValidConfig = !!(supabaseUrl && supabaseAnonKey)
         
         if (!hasValidConfig) {
           if (typeof window !== 'undefined') {
             console.error('❌ [ONEIRO] ========== Supabase 환경 변수 미설정 ==========')
             console.error('❌ [ONEIRO] Supabase 환경 변수 미설정:', {
-              hasSupabase: !!supabaseClient,
               hasUrl: !!supabaseUrl,
               hasAnonKey: !!supabaseAnonKey,
               envUrl: import.meta.env.VITE_SUPABASE_URL ? '있음' : '없음',
@@ -187,27 +172,32 @@ export default function Loading() {
           }
 
           try {
-            const { data, error: apiError } = await supabaseClient.functions.invoke('interpret-dream', {
-              body: {
+            // Edge Function URL (텔레그램 WebView에서 fetch가 더 안정적)
+            const edgeUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/interpret-dream`
+            
+            const res = await fetch(edgeUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+              },
+              body: JSON.stringify({
                 dreamText,
                 mood,
                 isRecurring,
                 telegramUserId: effectiveUserId,
                 language: requestLang,
-              },
+              }),
             })
 
-            if (apiError) {
+            const data = await res.json().catch(() => ({}))
+            
+            if (!res.ok) {
+              const errMsg = data?.error || res.statusText || 'Interpretation failed'
               if (typeof window !== 'undefined') {
-                console.error('❌ [ONEIRO] interpret-dream API error:', {
-                  error: apiError,
-                  message: (apiError as Error).message,
-                  context: (apiError as { context?: any })?.context
-                })
+                console.error('❌ [ONEIRO] interpret-dream API error:', { status: res.status, data, errMsg })
               }
-              const msg = (apiError as { context?: { body?: { error?: string } } })?.context?.body?.error
-                || (apiError as Error).message
-              throw new Error(msg || 'Interpretation failed. Please try again.')
+              throw new Error(errMsg)
             }
             if (data?.error) {
               if (typeof window !== 'undefined') {
@@ -220,7 +210,7 @@ export default function Loading() {
               console.log('✅ [ONEIRO] ========== API 호출 성공! ==========')
               console.log('✅ [ONEIRO] interpret-dream API 성공! 꿈마다 다른 해석이 나옵니다.', {
                 essence: data?.essence?.substring(0, 50),
-                symbols: data?.symbols?.map(s => s.name),
+                symbols: data?.symbols?.map((s: { name?: string }) => s.name),
                 hiddenMeaning: data?.hiddenMeaning?.substring(0, 50)
               })
               console.log('✅ [ONEIRO] ==========================================')
