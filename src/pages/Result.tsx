@@ -488,11 +488,11 @@ export default function Result({ fullReading = false }: ResultProps) {
 
   // For unlocked users, show full structured content
   // For locked users, show only first part of deepInsight
-  const insightSentences = displayResult.deepInsight ? displayResult.deepInsight.split(/[.!?]+/).filter(s => s.trim()) : []
+  const insightSentences = displayResult?.deepInsight ? displayResult.deepInsight.split(/[.!?]+/).filter(s => s.trim()) : []
   const visibleText = unlocked 
-    ? (displayResult.psychologicalShadow && displayResult.easternProphecy && displayResult.spiritualAdvice 
-        ? displayResult.deepInsight 
-        : displayResult.deepInsight)
+    ? (displayResult?.psychologicalShadow && displayResult?.easternProphecy && displayResult?.spiritualAdvice 
+        ? displayResult?.deepInsight ?? '' 
+        : displayResult?.deepInsight ?? '')
     : (insightSentences.length > 0 ? insightSentences.slice(0, 2).join('. ') + '.' : '')
 
   // 위임 클릭: 텔레그램 웹뷰에서 버튼 onClick이 안 먹을 때를 대비해, 영역 터치만으로 동작
@@ -855,6 +855,5 @@ export default function Result({ fullReading = false }: ResultProps) {
 
         </div>
       </div>
-    </div>
   )
 }
