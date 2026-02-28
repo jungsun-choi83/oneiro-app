@@ -31,8 +31,8 @@ export default function Result({ fullReading = false }: ResultProps) {
   // URL에 preview=1이 있으면 무조건 미리보기 모드
   // 없으면 브라우저에서 열었을 때만 미리보기 (텔레그램 사용자가 아닐 때)
   const showPreview = isPreviewMode || hasPreviewInUrl || (typeof window !== 'undefined' && !hasRealTelegramUser && !window.Telegram?.WebApp?.initDataUnsafe?.user)
-  // 테스트/디버그 박스: 텔레그램 앱에서는 절대 표시 안 함. 브라우저에서만 표시
-  const showDebugPanel = !isInTelegramApp && (showPreview || (typeof window !== 'undefined' && window.location.search.includes('debug=1')))
+  // 테스트/디버그 박스: 텔레그램 앱에서는 절대 숨김. 브라우저에서만 URL에 debug=1일 때 표시
+  const showDebugPanel = !isInTelegramApp && typeof window !== 'undefined' && window.location.search.includes('debug=1')
   
   // 디버깅용 로그 (즉시 출력 - useEffect 전에)
   if (typeof window !== 'undefined') {

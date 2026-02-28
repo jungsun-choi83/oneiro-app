@@ -21,10 +21,11 @@ export default function LanguageSelector() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative z-[100]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-tertiary bg-secondary/50 hover:bg-secondary transition-all text-white"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-tertiary bg-[#0F1629] hover:bg-[#1A2240] transition-all text-white shadow-lg"
+        style={{ backgroundColor: '#0F1629' }}
       >
         <span className="text-xl">{currentLang.flag}</span>
         <span className="text-sm font-medium">{currentLang.name}</span>
@@ -34,18 +35,21 @@ export default function LanguageSelector() {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[90]"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full mt-2 right-0 z-20 bg-secondary border border-tertiary rounded-lg shadow-lg overflow-hidden min-w-[160px]">
+          <div
+            className="absolute top-full mt-2 right-0 z-[100] rounded-lg shadow-xl overflow-hidden min-w-[160px] border border-indigo/50"
+            style={{ backgroundColor: '#0F1629' }}
+          >
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => changeLanguage(lang.code)}
-                className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-tertiary transition-colors ${
+                className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
                   i18n.language === lang.code
-                    ? 'bg-indigo/20 text-indigo-light'
-                    : 'text-white'
+                    ? 'bg-indigo/40 text-indigo-200'
+                    : 'text-white hover:bg-[#1A2240]'
                 }`}
               >
                 <span className="text-xl">{lang.flag}</span>
