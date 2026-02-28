@@ -24,10 +24,15 @@ export default function Result({ fullReading = false }: ResultProps) {
   // 브라우저에서도 telegram-web-app.js가 로드되면 window.Telegram이 있지만, user.id는 없음
   const hasRealTelegramUser = typeof window !== 'undefined' && 
     !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id)
-  
+  // 텔레그램 앱에서 열었는지: 유효한 user ID(양수)가 있으면 앱에서 연 것
+  const telegramUserId = typeof window !== 'undefined' ? getTelegramUserId() : null
+  const isInTelegramApp = telegramUserId != null && telegramUserId > 0
+
   // URL에 preview=1이 있으면 무조건 미리보기 모드
   // 없으면 브라우저에서 열었을 때만 미리보기 (텔레그램 사용자가 아닐 때)
   const showPreview = isPreviewMode || hasPreviewInUrl || (typeof window !== 'undefined' && !hasRealTelegramUser && !window.Telegram?.WebApp?.initDataUnsafe?.user)
+  // 테스트/디버그 박스: 텔레그램 앱에서는 절대 표시 안 함. 브라우저에서만 표시
+  const showDebugPanel = !isInTelegramApp && (showPreview || (typeof window !== 'undefined' && window.location.search.includes('debug=1')))
   
   // 디버깅용 로그 (즉시 출력 - useEffect 전에)
   if (typeof window !== 'undefined') {
@@ -109,6 +114,15 @@ export default function Result({ fullReading = false }: ResultProps) {
 
   // 미리보기 모드이거나 dreamResult가 없으면 mock 사용
   const displayResult = dreamResult || (showPreview ? previewMockResult : null)
+
+  // Hidden Meaning이 mock과 정확히 일치하면 API 실패로 간주 (같은 해석 문제)
+  const MOCK_HIDDEN_MEANING_EN = "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries the transformative power of the ocean that could change your destiny."
+  const MOCK_HIDDEN_MEANING_KO = "당신의 무의식이 숨기고 있는 거대한 신호가 발견되었습니다. 이 꿈은 단순한 기억이 아니라 당신의 운명을 바꿀 바다의 변혁적 힘을 품고 있습니다."
+  const isDisplayingMockContent = displayResult && (
+    displayResult.hiddenMeaning === MOCK_HIDDEN_MEANING_EN ||
+    displayResult.hiddenMeaning === MOCK_HIDDEN_MEANING_KO
+  )
+  const effectiveUsingMock = usedMockData || !!isDisplayingMockContent
 
   // 미리보기 모드가 아니고 dreamResult도 없으면 로딩 또는 리다이렉트
   // 단, 미리보기 모드면 미리보기 바를 보여주기 위해 계속 진행
@@ -574,8 +588,8 @@ export default function Result({ fullReading = false }: ResultProps) {
           <LanguageSelector />
         </div>
 
-        {/* 미리보기 모드: 결제 없이 꿈 시각화·리포트 화면 미리보기 - 최우선 표시 */}
-        {/* 디버깅: 항상 표시하되 내용만 조건부 */}
+        {/* 미리보기/디버그: showPreview 또는 URL에 debug=1일 때만 표시 */}
+        {showDebugPanel && (
         <div className="mb-4 p-4 rounded-xl border-2 border-amber-400 bg-amber-500/20 shadow-lg z-50 relative" style={{ display: 'block', visibility: 'visible', opacity: 1 }}>
           <p className="text-amber-100 font-bold text-lg mb-2">
             🔧 테스트 모드 {showPreview ? '✅ 활성화됨' : '❌ 비활성화됨'}
@@ -585,14 +599,14 @@ export default function Result({ fullReading = false }: ResultProps) {
           <div className="mb-3 p-3 bg-black/30 rounded-lg">
             <p className="text-amber-200 font-semibold text-sm mb-2">📊 API 호출 상태:</p>
             <div className="text-amber-200/90 text-xs font-mono space-y-1">
-              <div>• Mock 데이터 사용: {usedMockData ? '❌ 예 (같은 해석)' : '✅ 아니오 (다른 해석)'}</div>
+              <div>• Mock 데이터 사용: {effectiveUsingMock ? '❌ 예 (같은 해석)' : '✅ 아니오 (다른 해석)'}</div>
               <div>• Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ 설정됨' : '❌ 없음'}</div>
               <div>• Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ 설정됨' : '❌ 없음'}</div>
               <div>• 텔레그램 사용자 ID: {getTelegramUserId() || '없음 (브라우저 모드)'}</div>
             </div>
-            {usedMockData && (
+            {effectiveUsingMock && (
               <p className="text-red-300 text-xs mt-2 font-semibold">
-                ⚠️ Mock 데이터를 사용 중입니다. Vercel에 환경 변수를 설정하고 재배포하세요!
+                ⚠️ Mock 데이터 사용 중 — Hidden Meaning이 항상 같은 이유입니다. Supabase Edge Function에 OPENAI_API_KEY를 설정하고, 텔레그램 앱에서 네트워크 연결을 확인해 주세요.
               </p>
             )}
           </div>
@@ -656,7 +670,7 @@ export default function Result({ fullReading = false }: ResultProps) {
             </div>
             </>
           )}
-          {!showPreview && (
+          {!showPreview && !hasRealTelegramUser && (
             <p className="text-amber-200/90 text-sm">
               ⚠️ 미리보기 모드가 비활성화되어 있습니다. URL에 ?preview=1을 추가하거나 브라우저에서 직접 열어주세요.
             </p>

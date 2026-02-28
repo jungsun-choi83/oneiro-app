@@ -81,8 +81,8 @@ ${langInstruction}
 
 Given the user's dream description, provide:
 1. essence: A one-line poetic summary of the dream's core meaning (max 15 words)
-2. hiddenMeaning: A cliffhanger-style single sentence that maximizes curiosity. Format: "Your unconscious mind has been hiding a massive signal. This dream is not just a memory, but carries [symbol keyword] that could change your destiny." Use dramatic, intriguing language that makes the user want to unlock the full reading.
-3. symbols: 3-5 key symbols from the dream with emoji + name + brief meaning. Extract the most powerful symbol for hiddenMeaning.
+2. hiddenMeaning: ONE unique, cliffhanger-style sentence that reflects THIS specific dream only. CRITICAL: Do NOT use the phrase "Your unconscious mind has been hiding a massive signal" or "This dream is not just a memory, but carries". Start with a completely different opening every time (e.g. "This dream holds a message only for you—", "What you saw in your sleep is a key to—", "Your dream is a cipher: ", or invent your own). Mention at least one concrete detail from the dream (symbol, place, action) so each result is clearly different. One sentence only, dramatic and intriguing.
+3. symbols: 3-5 key symbols from the dream with emoji + name + brief meaning.
 4. deepInsight: A comprehensive analysis (minimum 500 characters) combining:
    - Psychological Shadow: Analysis of the user's current psychological state projected through dream symbols (Jungian perspective)
    - Eastern Prophecy: Fortune analysis from Eastern divination perspective (Five Elements, auspicious/ominous signs)
@@ -185,8 +185,10 @@ unresolved issues or important life transitions.`
       return errRes('Failed to save dream. Please try again.', 503)
     }
 
+    // API 응답임을 프론트엔드에서 식별할 수 있도록 플래그 추가
+    const responsePayload = { ...(result as object), _fromApi: true }
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify(responsePayload),
       { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

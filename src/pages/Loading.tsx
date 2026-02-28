@@ -211,12 +211,15 @@ export default function Loading() {
               console.log('✅ [ONEIRO] interpret-dream API 성공! 꿈마다 다른 해석이 나옵니다.', {
                 essence: data?.essence?.substring(0, 50),
                 symbols: data?.symbols?.map((s: { name?: string }) => s.name),
-                hiddenMeaning: data?.hiddenMeaning?.substring(0, 50)
+                hiddenMeaning: data?.hiddenMeaning?.substring(0, 50),
+                _fromApi: data?._fromApi
               })
               console.log('✅ [ONEIRO] ==========================================')
             }
             setDebugInfo(prev => ({ ...prev, apiCalling: false, apiSuccess: true, usingMock: false }))
-            setDreamResult(data)
+            // API 응답에서 _fromApi 제거 후 저장
+            const { _fromApi: _, ...cleanData } = data as Record<string, unknown>
+            setDreamResult(cleanData as Parameters<typeof setDreamResult>[0])
             setProgress(100)
             doneRef.current = true
             setTimeout(() => {
