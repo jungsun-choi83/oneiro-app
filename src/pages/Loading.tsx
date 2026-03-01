@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useDreamStore } from '../store/dreamStore'
+import { useDreamStore, type DreamResult } from '../store/dreamStore'
 import { getTelegramUserId } from '../lib/telegram'
 import LanguageSelector from '../components/LanguageSelector'
 import i18n from '../i18n/config'
@@ -219,7 +219,7 @@ export default function Loading() {
             setDebugInfo(prev => ({ ...prev, apiCalling: false, apiSuccess: true, usingMock: false }))
             // API 응답에서 _fromApi 제거 후 저장
             const { _fromApi: _, ...cleanData } = data as Record<string, unknown>
-            setDreamResult(cleanData as Parameters<typeof setDreamResult>[0])
+            setDreamResult(cleanData as unknown as DreamResult)
             setProgress(100)
             doneRef.current = true
             setTimeout(() => {

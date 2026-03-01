@@ -676,6 +676,7 @@ export default function Result({ fullReading = false }: ResultProps) {
             </p>
           )}
         </div>
+        )}
 
         {/* 해몽 내용 표시 (displayResult가 있을 때만) */}
         {displayResult && (
