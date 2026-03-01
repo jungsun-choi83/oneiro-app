@@ -369,25 +369,6 @@ export default function Loading() {
           </div>
         )}
 
-        {/* 디버그 정보: URL에 ?debug=1 있을 때만 표시 */}
-        {typeof window !== 'undefined' && window.location.search.includes('debug=1') && (
-        <div className="mt-8 p-4 bg-black/30 rounded-lg border border-amber-400/30">
-          <p className="text-amber-200 font-semibold text-sm mb-2">🔍 디버그 정보:</p>
-          <div className="text-amber-200/90 text-xs font-mono space-y-1 text-left">
-            <div>• API 호출 중: {debugInfo.apiCalling ? '⏳ 예' : '❌ 아니오'}</div>
-            <div>• API 성공: {debugInfo.apiSuccess === null ? '⏳ 대기 중' : debugInfo.apiSuccess ? '✅ 예' : '❌ 아니오'}</div>
-            <div>• Mock 데이터 사용: {debugInfo.usingMock ? '❌ 예 (같은 해석)' : '✅ 아니오 (다른 해석)'}</div>
-            <div>• Supabase 설정: {debugInfo.supabaseConfigured ? '✅ 예' : '❌ 아니오'}</div>
-            <div>• Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ 있음' : '❌ 없음'}</div>
-            <div>• Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ 있음' : '❌ 없음'}</div>
-          </div>
-          {debugInfo.usingMock && (
-            <p className="text-red-300 text-xs mt-2 font-semibold">
-              ⚠️ Mock 데이터를 사용 중입니다. Vercel에 환경 변수를 설정하고 재배포하세요!
-            </p>
-          )}
-        </div>
-        )}
       </div>
     </div>
   )
