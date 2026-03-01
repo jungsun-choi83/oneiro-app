@@ -18,7 +18,8 @@
     "interpret": "꿈 해몽하기",
     "minLength": "최소 20자 이상",
     "maxLength": "최대 2000자",
-    "charCount": "{{count}}자"
+    "charCount": "{{count}}자",
+    "interpretLanguageHint": "해몽 결과는 위에서 선택한 언어로 생성됩니다."
   },
   "loading": {
     "step1": "당신의 꿈 속으로 들어가는 중...",

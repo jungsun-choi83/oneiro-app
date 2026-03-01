@@ -18,7 +18,8 @@
     "interpret": "Interpretar Mi Sueño",
     "minLength": "Mínimo 20 caracteres",
     "maxLength": "Máximo 2000 caracteres",
-    "charCount": "{{count}} caracteres"
+    "charCount": "{{count}} caracteres",
+    "interpretLanguageHint": "La interpretación se mostrará en el idioma seleccionado arriba."
   },
   "loading": {
     "step1": "Entrando en tu mundo de sueños...",

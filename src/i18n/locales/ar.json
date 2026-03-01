@@ -18,7 +18,8 @@
     "interpret": "فسر حلمي",
     "minLength": "الحد الأدنى 20 حرفاً",
     "maxLength": "الحد الأقصى 2000 حرف",
-    "charCount": "{{count}} حرف"
+    "charCount": "{{count}} حرف",
+    "interpretLanguageHint": "سيتم عرض التفسير باللغة المحددة أعلاه."
   },
   "loading": {
     "step1": "الدخول إلى عالم أحلامك...",

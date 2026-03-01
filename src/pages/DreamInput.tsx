@@ -24,7 +24,8 @@ export default function DreamInput() {
   
   const handleSubmit = () => {
     if (text.length >= 20) {
-      const lang = (i18n.language || localStorage.getItem('oneiro_language') || 'en').split('-')[0]
+      // 제출 시점의 언어: 저장된 선택값 우선 (언어 선택이 즉시 반영되도록)
+      const lang = (localStorage.getItem('oneiro_language') || i18n.language || 'en').split('-')[0]
       setDreamText(text)
       setInterpretLanguage(lang)
       navigate('/loading', { state: { requestLanguage: lang } })
@@ -40,6 +41,7 @@ export default function DreamInput() {
         <div className="flex justify-end mb-4">
           <LanguageSelector />
         </div>
+        <p className="text-right text-text-secondary text-xs mb-4">{t('dream.interpretLanguageHint')}</p>
 
         {/* Header */}
         <div className="text-center mb-8">

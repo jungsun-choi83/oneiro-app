@@ -18,7 +18,8 @@
     "interpret": "夢を解釈する",
     "minLength": "最低20文字",
     "maxLength": "最大2000文字",
-    "charCount": "{{count}}文字"
+    "charCount": "{{count}}文字",
+    "interpretLanguageHint": "解釈は上で選択した言語で表示されます。"
   },
   "loading": {
     "step1": "あなたの夢の世界に入る中...",

@@ -67,7 +67,7 @@ export default function Loading() {
   useEffect(() => {
     doneRef.current = false
     const interpretDream = async () => {
-      const requestLang = requestLangFromNav ?? (interpretLanguage || i18n.language || 'en').split('-')[0]
+      const requestLang = requestLangFromNav ?? (interpretLanguage || (typeof window !== 'undefined' ? localStorage.getItem('oneiro_language') : null) || i18n.language || 'en').split('-')[0]
       
       // 즉시 로그 출력 (가장 먼저)
       if (typeof window !== 'undefined') {

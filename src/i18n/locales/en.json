@@ -18,7 +18,8 @@
     "interpret": "Interpret My Dream",
     "minLength": "Minimum 20 characters",
     "maxLength": "Maximum 2000 characters",
-    "charCount": "{{count}} characters"
+    "charCount": "{{count}} characters",
+    "interpretLanguageHint": "Interpretation will be in the selected language above."
   },
   "loading": {
     "step1": "Entering your dreamscape...",
