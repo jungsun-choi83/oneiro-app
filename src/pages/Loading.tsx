@@ -369,7 +369,8 @@ export default function Loading() {
           </div>
         )}
 
-        {/* 디버그 정보 */}
+        {/* 디버그 정보: URL에 ?debug=1 있을 때만 표시 */}
+        {typeof window !== 'undefined' && window.location.search.includes('debug=1') && (
         <div className="mt-8 p-4 bg-black/30 rounded-lg border border-amber-400/30">
           <p className="text-amber-200 font-semibold text-sm mb-2">🔍 디버그 정보:</p>
           <div className="text-amber-200/90 text-xs font-mono space-y-1 text-left">
@@ -386,6 +387,7 @@ export default function Loading() {
             </p>
           )}
         </div>
+        )}
       </div>
     </div>
   )
