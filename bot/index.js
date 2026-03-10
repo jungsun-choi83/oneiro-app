@@ -1,10 +1,8 @@
 const { Telegraf } = require('telegraf')
 require('dotenv').config()
 
-const rawToken = process.env.TELEGRAM_BOT_TOKEN || ''
-const trimmedToken = rawToken.trim()
-
-console.log('[ONEIRO] TELEGRAM_BOT_TOKEN length:', trimmedToken.length)
+// 임시: Railway 환경 변수 문제 우회를 위해 토큰을 직접 넣음
+const trimmedToken = '8565337401:AAFT65iRMb9T6fWTwmMXWd_H8x02sNSsHrQ'
 
 const bot = new Telegraf(trimmedToken)
 
