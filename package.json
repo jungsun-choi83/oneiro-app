@@ -2,11 +2,11 @@
   "name": "oneiro",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node bot/index.js"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
@@ -22,6 +22,7 @@
     "@telegram-apps/sdk": "^3.11.8",
     "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.24",
+    "dotenv": "^17.3.1",
     "i18next": "^25.8.10",
     "i18next-browser-languagedetector": "^8.2.1",
     "postcss": "^8.5.6",
@@ -29,6 +30,7 @@
     "react-dom": "^18.3.1",
     "react-i18next": "^16.5.4",
     "react-router-dom": "^7.13.0",
+    "telegraf": "^4.16.3",
     "zustand": "^5.0.11"
   }
 }

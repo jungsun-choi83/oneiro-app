@@ -6,6 +6,50 @@ import { supabase } from '../lib/supabase'
 import { getTelegramUserId } from '../lib/telegram'
 import LanguageSelector from '../components/LanguageSelector'
 
+const WATERMARK_TEXT = '✦ ONEIRO / @ONEIRO83Bot'
+const BOT_LINK = 'https://t.me/ONEIRO83Bot'
+
+function drawWatermark(canvas: HTMLCanvasElement, imageUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1)
+      canvas.width = img.naturalWidth * dpr
+      canvas.height = img.naturalHeight * dpr
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('No canvas context'))
+        return
+      }
+      ctx.scale(dpr, dpr)
+      ctx.drawImage(img, 0, 0)
+      const w = img.naturalWidth
+      const h = img.naturalHeight
+      const pad = 16
+      const fontSize = Math.max(12, Math.min(14, w / 32))
+      ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`
+      const textWidth = ctx.measureText(WATERMARK_TEXT).width
+      const pillW = textWidth + 24
+      const pillH = 28
+      const x = w - pillW - pad
+      const y = h - pillH - pad
+      const r = pillH / 2
+      ctx.beginPath()
+      ctx.roundRect(x, y, pillW, pillH, r)
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,0.95)'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(WATERMARK_TEXT, x + pillW / 2, y + pillH / 2)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = imageUrl
+  })
+}
+
 export default function Visualize() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -13,6 +57,7 @@ export default function Visualize() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState(false)
+  const [watermarkedDataUrl, setWatermarkedDataUrl] = useState<string | null>(null)
 
   useEffect(() => {
     const generateImage = async () => {
@@ -42,9 +87,10 @@ export default function Visualize() {
         })
 
         if (apiError) throw apiError
+        if (!data?.imageUrl) throw new Error('No image in response')
 
         setDreamImage(data.imageUrl)
-        setArtTitle(data.artTitle)
+        setArtTitle(data.artTitle ?? '')
         setLoading(false)
       } catch (err) {
         console.error('Error generating image:', err)
@@ -56,24 +102,50 @@ export default function Visualize() {
     generateImage()
   }, [dreamText, dreamResult, dreamImage, setDreamImage, setArtTitle])
 
+  useEffect(() => {
+    if (!dreamImage) {
+      setWatermarkedDataUrl(null)
+      return
+    }
+    const canvas = document.createElement('canvas')
+    drawWatermark(canvas, dreamImage)
+      .then(setWatermarkedDataUrl)
+      .catch(() => setWatermarkedDataUrl(dreamImage))
+  }, [dreamImage])
+
+  const displayImageUrl = watermarkedDataUrl || dreamImage
   const showPreviewPlaceholder = previewMode && !dreamImage
 
   const handleSave = () => {
-    if (dreamImage) {
+    if (displayImageUrl) {
       const link = document.createElement('a')
-      link.href = dreamImage
+      link.href = displayImageUrl
       link.download = `${artTitle || 'dream-art'}.png`
       link.click()
     }
   }
 
-  const handleShare = () => {
+  const handleShareToStory = () => {
+    const urlToShare = displayImageUrl || dreamImage
+    if (!urlToShare) return
     try {
-      if (dreamImage && window.Telegram?.WebApp?.openLink) {
-        window.Telegram.WebApp.openLink(dreamImage)
+      if (typeof window.Telegram?.WebApp?.shareToStory === 'function') {
+        window.Telegram.WebApp.shareToStory(urlToShare, {
+          widget_link: { url: BOT_LINK, name: 'Interpret My Dream' },
+        })
+        if (window.Telegram?.WebApp?.showAlert) {
+          window.Telegram.WebApp.showAlert('Shared successfully! 🌌')
+        }
+      } else if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(urlToShare)
+        if (window.Telegram?.WebApp?.showAlert) {
+          window.Telegram.WebApp.showAlert('Shared successfully! 🌌')
+        }
+      } else {
+        window.open(urlToShare, '_blank')
       }
     } catch {
-      if (dreamImage) window.open(dreamImage, '_blank')
+      if (urlToShare) window.open(urlToShare, '_blank')
     }
   }
 
@@ -86,10 +158,14 @@ export default function Visualize() {
         </div>
         {loading ? (
           <div className="text-center py-20">
-            <div className="text-6xl mb-4 animate-pulse">🌙</div>
-            <p className="text-xl text-white mb-8">{t('visualize.loading')}</p>
-            <div className="w-full bg-tertiary rounded-full h-2">
-              <div className="h-full bg-gradient-indigo animate-pulse" style={{ width: '60%' }} />
+            <div className="aspect-square w-full max-w-md mx-auto rounded-lg border border-indigo/30 bg-indigo/10 overflow-hidden mb-6">
+              <div className="w-full h-full animate-pulse bg-gradient-to-br from-indigo/30 via-purple/20 to-indigo/30" />
+            </div>
+            <div className="text-5xl mb-4 animate-pulse opacity-80">🌙 ✦</div>
+            <p className="text-xl text-white/90 mb-2">{t('visualize.loading')}</p>
+            <p className="text-sm text-indigo-200/80 mb-8">Surreal dream illustration in progress...</p>
+            <div className="w-full max-w-xs mx-auto bg-tertiary rounded-full h-2 overflow-hidden">
+              <div className="h-full w-[70%] bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse rounded-full" />
             </div>
           </div>
         ) : error ? (
@@ -135,7 +211,7 @@ export default function Visualize() {
             <div className="card mb-6">
               <div className="relative">
                 <img
-                  src={dreamImage}
+                  src={displayImageUrl || dreamImage}
                   alt="Dream visualization"
                   className="w-full rounded-lg border-4 border-indigo/50 shadow-moonlight-lg"
                 />
@@ -167,13 +243,15 @@ export default function Visualize() {
               </div>
             )}
 
-            <div className="flex gap-4 mb-6">
-              <button onClick={handleSave} className="btn-primary flex-1">
-                {t('visualize.save')}
-              </button>
-              <button onClick={handleShare} className="btn-primary flex-1">
-                {t('visualize.share')}
-              </button>
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="flex gap-4">
+                <button onClick={handleSave} className="btn-primary flex-1">
+                  {t('visualize.save')}
+                </button>
+                <button onClick={handleShareToStory} className="btn-primary flex-1">
+                  {t('visualize.shareToStory')}
+                </button>
+              </div>
             </div>
 
             <button

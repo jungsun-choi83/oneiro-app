@@ -37,6 +37,10 @@ declare global {
         openInvoice: (url: string, callback?: (status: string) => void) => void
         openLink: (url: string) => void
         showAlert: (message: string) => void
+        shareToStory?: (
+          mediaUrl: string,
+          options?: { text?: string; widget_link?: { url: string; name?: string } }
+        ) => void
       }
     }
   }

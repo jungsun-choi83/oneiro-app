@@ -64,19 +64,41 @@ bot.command('dream', (ctx) => {
   })
 })
 
-// Pre-checkout query handler
-bot.on('pre_checkout_query', (ctx) => {
-  ctx.answerPreCheckoutQuery(true)
+// Pre-checkout query handler (필수: 결제 허용 응답을 해야 결제가 완료됨)
+bot.on('pre_checkout_query', async (ctx) => {
+  try {
+    await ctx.answerPreCheckoutQuery(true)
+    console.log('[ONEIRO] pre_checkout_query answered OK, payload:', ctx.preCheckoutQuery.invoice_payload)
+  } catch (err) {
+    console.error('[ONEIRO] pre_checkout_query answer error:', err)
+    try {
+      await ctx.answerPreCheckoutQuery(false, err.message || 'Payment could not be processed.')
+    } catch (e) {
+      console.error('[ONEIRO] answerPreCheckoutQuery(false) failed:', e)
+    }
+  }
 })
 
 // Successful payment handler
 bot.on('successful_payment', async (ctx) => {
   const payment = ctx.message.successful_payment
-  const payload = JSON.parse(payment.invoice_payload || '{}')
-  
-  // Handle payment completion
-  // Update database, unlock content, etc.
-  
+  const rawPayload = payment.invoice_payload || ''
+  let product = ''
+  let telegramUserId = ''
+  try {
+    if (rawPayload.startsWith('{')) {
+      const parsed = JSON.parse(rawPayload)
+      product = parsed.product
+      telegramUserId = parsed.telegramUserId
+    } else {
+      const parts = rawPayload.split('_')
+      product = parts[0] || ''
+      telegramUserId = parts[1] || ''
+    }
+  } catch (e) {
+    console.error('Payload parse error:', e)
+  }
+  console.log('[ONEIRO] Successful payment:', { product, telegramUserId, rawPayload })
   ctx.reply('✅ Payment successful! Your content has been unlocked.')
 })
 

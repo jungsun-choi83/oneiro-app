@@ -17,7 +17,7 @@ export default function Loading() {
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<{
+  const [, setDebugInfo] = useState<{
     apiCalling: boolean
     apiSuccess: boolean | null
     usingMock: boolean

@@ -72,6 +72,7 @@
     "title": "Art Title",
     "save": "Save",
     "share": "Share",
+    "shareToStory": "Share to Story",
     "another": "Interpret Another Dream",
     "error": "Failed to generate image. Please try again.",
     "retry": "Retry"

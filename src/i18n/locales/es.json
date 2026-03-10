@@ -66,6 +66,7 @@
     "title": "Título de la Obra",
     "save": "Guardar",
     "share": "Compartir",
+    "shareToStory": "Compartir en Story",
     "another": "Interpretar Otro Sueño",
     "error": "Error al generar la imagen. Por favor, inténtalo de nuevo.",
     "retry": "Reintentar"

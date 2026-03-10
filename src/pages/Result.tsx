@@ -83,6 +83,13 @@ export default function Result({ fullReading = false }: ResultProps) {
     unlock: () => void
   }>(null as any)
 
+  /** Telegram may send "Paid" (capital P) or "paid"; Stars sometimes reports failed despite success. */
+  const isPaymentSuccess = (status: string) => (status?.toLowerCase() === 'paid')
+  const isPaymentFailedOrCancelled = (status: string) => {
+    const s = status?.toLowerCase()
+    return s === 'failed' || s === 'cancelled'
+  }
+
   useEffect(() => {
     setHydrated(true)
   }, [])
@@ -240,7 +247,7 @@ export default function Result({ fullReading = false }: ResultProps) {
         if (window.Telegram?.WebApp?.openInvoice) {
           window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
             console.log('[ONEIRO] Payment status:', status)
-            if (status === 'paid') {
+            if (isPaymentSuccess(status)) {
               setUnlocked(true)
               setShowBlur(false)
               if (userProfile) {
@@ -250,11 +257,11 @@ export default function Result({ fullReading = false }: ResultProps) {
                 })
               }
               showMsg('결제가 완료되었습니다! 전체 해몽을 확인하세요.')
-            } else if (status === 'failed' || status === 'cancelled') {
+            } else if (isPaymentFailedOrCancelled(status)) {
               console.warn('[ONEIRO] Payment failed or cancelled:', status)
               showMsg('결제가 취소되었거나 실패했습니다. 다시 시도해 주세요.')
             } else {
-              console.log('[ONEIRO] Payment status:', status)
+              console.log('[ONEIRO] Payment status (other):', status)
             }
           })
         } else {
@@ -340,11 +347,13 @@ export default function Result({ fullReading = false }: ResultProps) {
         if (window.Telegram?.WebApp?.openInvoice) {
           window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
             console.log('[ONEIRO] Payment status:', status)
-            if (status === 'paid') {
+            if (isPaymentSuccess(status)) {
               navigate('/visualize')
-            } else if (status === 'failed' || status === 'cancelled') {
+            } else if (isPaymentFailedOrCancelled(status)) {
               console.warn('[ONEIRO] Payment failed or cancelled:', status)
               showMsg('결제가 취소되었거나 실패했습니다. 다시 시도해 주세요.')
+            } else {
+              console.log('[ONEIRO] Payment status (other):', status)
             }
           })
         } else {
@@ -426,11 +435,13 @@ export default function Result({ fullReading = false }: ResultProps) {
         if (window.Telegram?.WebApp?.openInvoice) {
           window.Telegram.WebApp.openInvoice(data.invoice_url, (status) => {
             console.log('[ONEIRO] Payment status:', status)
-            if (status === 'paid') {
+            if (isPaymentSuccess(status)) {
               navigate('/report')
-            } else if (status === 'failed' || status === 'cancelled') {
+            } else if (isPaymentFailedOrCancelled(status)) {
               console.warn('[ONEIRO] Payment failed or cancelled:', status)
               showMsg('결제가 취소되었거나 실패했습니다. 다시 시도해 주세요.')
+            } else {
+              console.log('[ONEIRO] Payment status (other):', status)
             }
           })
         } else {
