@@ -1,7 +1,12 @@
 const { Telegraf } = require('telegraf')
 require('dotenv').config()
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
+const rawToken = process.env.TELEGRAM_BOT_TOKEN || ''
+const trimmedToken = rawToken.trim()
+
+console.log('[ONEIRO] TELEGRAM_BOT_TOKEN length:', trimmedToken.length)
+
+const bot = new Telegraf(trimmedToken)
 
 // Start command with referral handling
 bot.start(async (ctx) => {
